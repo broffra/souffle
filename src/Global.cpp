@@ -106,9 +106,9 @@ void MainConfig::processArgs(int argc, char** argv, const std::string header, co
             longNames[i] = (option){opt.longName.c_str(), (!opt.argument.empty()), nullptr, opt.shortName};
             // append the short name of the option to the string of short names
             shortNames += opt.shortName;
-            // indicating with a ':' if it takes an argument
+            // indicating with a '::' if it takes an optional argument
             if (!opt.argument.empty()) {
-                shortNames += ":";
+                shortNames += "::";
             }
             // increment counter
             ++i;
