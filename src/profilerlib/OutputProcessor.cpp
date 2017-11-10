@@ -69,7 +69,7 @@ Table OutputProcessor::getRulTable() {
 
     for (auto& rel : relation_map) {
         for (auto& _rul : rel.second->getRuleMap()) {
-            Row row(11);
+            Row row(12);
             std::shared_ptr<Rule> rul = _rul.second;
             row[1] = std::shared_ptr<CellInterface>(new Cell<double>(rul->getRuntime()));
             row[2] = std::shared_ptr<CellInterface>(new Cell<double>(0.0));
@@ -80,6 +80,7 @@ Table OutputProcessor::getRulTable() {
             row[7] = std::shared_ptr<CellInterface>(new Cell<std::string>(rel.second->getName()));
             row[8] = std::shared_ptr<CellInterface>(new Cell<long>(0));
             row[10] = std::shared_ptr<CellInterface>(new Cell<std::string>(rul->getLocator()));
+            row[11] = std::shared_ptr<CellInterface>(new Cell<long>(rul->getLineNumber()));
 
             rule_map.emplace(rul->getName(), std::make_shared<Row>(row));
         }
@@ -96,7 +97,7 @@ Table OutputProcessor::getRulTable() {
                     row[0] = std::shared_ptr<CellInterface>(new Cell<double>(rul->getRuntime()));
                     rule_map[rul->getName()] = std::make_shared<Row>(row);
                 } else {
-                    Row row(11);
+                    Row row(12);
                     row[1] = std::shared_ptr<CellInterface>(new Cell<double>(0.0));
                     row[2] = std::shared_ptr<CellInterface>(new Cell<double>(rul->getRuntime()));
                     row[3] = std::shared_ptr<CellInterface>(new Cell<double>(0.0));
@@ -106,6 +107,7 @@ Table OutputProcessor::getRulTable() {
                     row[7] = std::shared_ptr<CellInterface>(new Cell<std::string>(rel.second->getName()));
                     row[8] = std::shared_ptr<CellInterface>(new Cell<long>(rul->getVersion()));
                     row[0] = std::shared_ptr<CellInterface>(new Cell<double>(rul->getRuntime()));
+                    row[11] = std::shared_ptr<CellInterface>(new Cell<long>(rul->getLineNumber()));
                     rule_map[rul->getName()] = std::make_shared<Row>(row);
                 }
             }

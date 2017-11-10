@@ -21,6 +21,7 @@ void Iteration::addRule(std::vector<std::string> data, std::string rec_id) {
             std::shared_ptr<Rule> rul_rec = std::make_shared<Rule>(Rule(data[4], std::stoi(data[2]), rec_id));
             rul_rec->setRuntime(std::stod(data[5]));
             rul_rec->setLocator(data[3]);
+            rul_rec->setLineNumber();
             rul_rec_map[strTemp] = rul_rec;
         }
 
