@@ -476,10 +476,10 @@ void Tui::rul(std::string c) {
     rul_table_state.sort(sort_col);
     std::cout << "  ----- Rule Table -----\n";
     std::printf(
-            "%8s%8s%8s%8s%15s    %-5s\n\n", "TOT_T", "NREC_T", "REC_T", "COPY_T", "TUPLES", "ID RELATION");
+            "%8s%8s%8s%8s%15s%8s%8s %-25s\n\n", "TOT_T", "NREC_T", "REC_T", "COPY_T", "TUPLES", "ID", "LINE", "RELATION");
     for (auto& row : out.formatTable(rul_table_state, precision)) {
-        std::printf("%8s%8s%8s%8s%15s%8s %-25s\n", row[0].c_str(), row[1].c_str(), row[2].c_str(),
-                row[3].c_str(), row[4].c_str(), row[6].c_str(), row[7].c_str());
+        std::printf("%8s%8s%8s%8s%15s%8s%8s %-25s\n", row[0].c_str(), row[1].c_str(), row[2].c_str(),
+                row[3].c_str(), row[4].c_str(), row[6].c_str(), row[11].c_str(), row[7].c_str());
     }
 }
 
