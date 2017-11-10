@@ -61,7 +61,57 @@ public:
 };
 }  // namespace
 
+// splits up a string into a vector given a delimiter
+std::vector<std::string> split(std::string s, char delim, int times = -1) {
+    std::vector<std::string> res;
+    std::stringstream ss(s);
+    std::string item;
+
+    while ((times > 0 || times <= -1) && std::getline(ss, item, delim)) {
+        res.push_back(item);
+        times--;
+    }
+
+    return res;
+}
+
+// checks whether an element is contained within a set
+template <class T>
+bool contains(std::set<T> set, T element) {
+    return set.find(element) != set.end();
+}
+
+// ensures that every relation or rule not specified by
+// the auto-schedule option is ignored by the scheduler
+void setFixedExecutionPlans(const AstProgram* program) {
+    std::set<std::string> relsToSchedule;
+    std::set<int> rulesToSchedule;
+
+    for (std::string token : split(Global::config().get("auto-schedule"), ',')) {
+        try {
+            rulesToSchedule.insert(std::stoi(token));
+        } catch (const std::invalid_argument& e) {
+            relsToSchedule.insert(token);
+        }
+    }
+
+    for (AstRelation* rel : program->getRelations()) {
+        if (!contains(relsToSchedule, rel->getName().getNames()[0])) {
+            for (AstClause* clause : rel->getClauses()) {
+                if (!contains(rulesToSchedule, clause->getSrcLoc().start.line)) {
+                    clause->setFixedExecutionPlan();
+                }
+            }
+        }
+    }
+}
+
 bool AutoScheduleTransformer::transform(AstTranslationUnit& translationUnit) {
+    // if relations or rules were specified, ignore everything other than those specified
+    if (!Global::config().get("auto-schedule").empty()) {
+        setFixedExecutionPlans(translationUnit.getProgram());
+    }
+
     bool changed = false;
     if (!Global::config().get("debug-report").empty()) {
         std::stringstream report;

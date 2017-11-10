@@ -112,8 +112,9 @@ int main(int argc, char** argv) {
                             {"compile", 'c', "", "", false,
                                     "Generate C++ source code, compile to a binary executable, then run this "
                                     "executable."},
-                            {"auto-schedule", 'a', "", "", false,
-                                    "Switch on automated clause scheduling for compiler."},
+                            {"auto-schedule", 'a', "LINES", "", false,
+                                    "Switch on automated clause scheduling for compiler on the given line "
+                                    "numbers or relation names, leave blank for all."},
                             {"generate", 'g', "FILE", "", false,
                                     "Generate C++ source code for the given Datalog program and write it to "
                                     "<FILE>."},
