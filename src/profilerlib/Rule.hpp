@@ -23,6 +23,7 @@ protected:
     long num_tuples = 0;
     std::string identifier;
     std::string locator = "";
+    int lineNumber = -1;
 
 private:
     bool recursive = false;
@@ -83,6 +84,12 @@ public:
     inline void setVersion(int version) {
         this->version = version;
     }
+
+    inline int getLineNumber() {
+        return lineNumber;
+    }
+
+    void setLineNumber();
 
     std::string toString();
 };

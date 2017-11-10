@@ -7,6 +7,7 @@
  */
 
 #include "Rule.hpp"
+#include <regex>
 
 std::string Rule::toString() {
     std::ostringstream output;
@@ -24,5 +25,18 @@ void Rule::setLocator(std::string locator) {
         this->locator = locator;
     } else {
         this->locator += " " + locator;
+    }
+}
+
+void Rule::setLineNumber() {
+    if (locator.empty()) {
+        return;
+    }
+
+    std::regex line_regex("\\[([0-9]+):[^\\]]*\\]");
+    std::smatch line_match;
+
+    if (std::regex_search(locator, line_match, line_regex)) {
+        lineNumber = std::stoi(line_match[1]);
     }
 }
