@@ -945,12 +945,12 @@ namespace {
 
 using namespace scheduler;
 
-Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostream* report) {
+Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostringstream* report) {
     assert(!clause.isFact());
 
     // check whether schedule is fixed
     if (clause.hasFixedExecutionPlan()) {
-        if (report) {
+        if (false) {
             *report << "   Skipped due to fixed execution plan!\n";
         }
         return Order::getIdentity(clause.getAtoms().size());
@@ -1018,12 +1018,6 @@ Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostream* repo
     // solve the optimization problem
     auto schedule = p.solve();
 
-    // log problem and solution
-    if (report) {
-        *report << "Scheduling Problem: " << p << "\n";
-        *report << "          Schedule: " << schedule << "\n";
-    }
-
     // extract order
     Order res;
     for (const auto& cur : schedule) {
@@ -1032,6 +1026,12 @@ Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostream* repo
 
     // re-order atoms
     clause.reorderAtoms(res.getOrder());
+
+    // log problem and solution
+    if (report && !equal_targets(atoms, clause.getAtoms())) {
+        *report << "Scheduling Problem: " << p << "\n";
+        *report << "          Schedule: " << schedule << "\n";
+    }
 
     // done
     return res;
@@ -1062,27 +1062,21 @@ const QueryExecutionStrategy ScheduledExecution = [](
     std::unique_ptr<AstClause> clause(insert.getOrigin().clone());
 
     Order order;
+    bool changed = false;
 
     // (re-)schedule clause
-    if (report) {
-        *report << "\nScheduling clause @ " << clause->getSrcLoc() << "\n";
-    }
     {
+        std::ostringstream ss;
         auto start = now();
-        order = scheduleByModel(*clause, env, report);
+        order = scheduleByModel(*clause, env, &ss);
         auto end = now();
-        if (report) {
+        changed = !equal_targets(insert.getOrigin().getAtoms(), clause->getAtoms());
+        if (changed && report) {
+            *report << "\nScheduling clause @ " << clause->getSrcLoc() << "\n";
+            *report << ss.str();
             *report << "    Original Query: " << insert.getOrigin() << "\n";
-        }
-        if (report) {
             *report << "       Rescheduled: " << *clause << "\n";
-        }
-        if (!equal_targets(insert.getOrigin().getAtoms(), clause->getAtoms())) {
-            if (report) {
-                *report << "            Order has Changed!\n";
-            }
-        }
-        if (report) {
+            *report << "            Order has Changed!\n";
             *report << "   Scheduling Time: " << duration_in_ms(start, end) << "ms\n";
         }
     }
@@ -1097,7 +1091,7 @@ const QueryExecutionStrategy ScheduledExecution = [](
     auto numIters = apply(static_cast<RamInsert*>(stmt.get())->getOperation(), env);
     auto end = now();
     auto runtime = duration_in_ms(start, end);
-    if (report) {
+    if (changed && report) {
         *report << "           Runtime: " << runtime << "ms\n";
         *report << "           Iterations: " << numIters << "\n";
     }
