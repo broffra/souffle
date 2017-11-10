@@ -453,13 +453,18 @@ bool eval(const RamCondition& cond, RamEnvironment& env, const EvalContext& ctxt
     return Evaluator(env, ctxt)(cond);
 }
 
-void apply(const RamOperation& op, RamEnvironment& env, const EvalContext& args = EvalContext()) {
+size_t apply(const RamOperation& op, RamEnvironment& env, const EvalContext& args = EvalContext()) {
     class Interpreter : public RamVisitor<void> {
         RamEnvironment& env;
         EvalContext& ctxt;
+        size_t numIters;
 
     public:
-        Interpreter(RamEnvironment& env, EvalContext& ctxt) : env(env), ctxt(ctxt) {}
+        Interpreter(RamEnvironment& env, EvalContext& ctxt) : env(env), ctxt(ctxt), numIters(0) {}
+
+        size_t getNumIters() {
+            return numIters;
+        }
 
         // -- Operations -----------------------------
 
@@ -491,6 +496,7 @@ void apply(const RamOperation& op, RamEnvironment& env, const EvalContext& args 
                     ctxt[scan.getLevel()] = cur;
                     visitSearch(scan);
                 }
+                numIters += rel.size();
                 return;
             }
 
@@ -533,6 +539,8 @@ void apply(const RamOperation& op, RamEnvironment& env, const EvalContext& args 
                 ctxt[scan.getLevel()] = data;
                 visitSearch(scan);
             }
+
+            numIters += std::distance(range.first, range.second);
         }
 
         void visitLookup(const RamLookup& lookup) override {
@@ -706,7 +714,10 @@ void apply(const RamOperation& op, RamEnvironment& env, const EvalContext& args 
     ctxt.setReturnValues(args.getReturnValues());
     ctxt.setReturnErrors(args.getReturnErrors());
     ctxt.setArguments(args.getArguments());
-    Interpreter(env, ctxt).visit(op);
+
+    Interpreter interpreter(env, ctxt);
+    interpreter.visit(op);
+    return interpreter.getNumIters();
 }
 
 void run(const QueryExecutionStrategy& executor, std::ostream* report, std::ostream* profile,
@@ -1083,11 +1094,12 @@ const QueryExecutionStrategy ScheduledExecution = [](
 
     // run rescheduled node
     auto start = now();
-    apply(static_cast<RamInsert*>(stmt.get())->getOperation(), env);
+    auto numIters = apply(static_cast<RamInsert*>(stmt.get())->getOperation(), env);
     auto end = now();
     auto runtime = duration_in_ms(start, end);
     if (report) {
         *report << "           Runtime: " << runtime << "ms\n";
+        *report << "           Iterations: " << numIters << "\n";
     }
 
     return ExecutionSummary({order, runtime});
