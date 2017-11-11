@@ -887,7 +887,7 @@ void run(const QueryExecutionStrategy& executor, std::ostream* report, std::ostr
 
         bool visitInsert(const RamInsert& insert) override {
             // run generic query executor
-            queryExecutor(insert, env, report);
+            queryExecutor(insert, env, profile);
             return true;
         }
 
@@ -1040,29 +1040,38 @@ Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostringstream
 
 /** With this strategy queries will be processed as they are stated by the user */
 const QueryExecutionStrategy DirectExecution = [](
-        const RamInsert& insert, RamEnvironment& env, std::ostream*) -> ExecutionSummary {
+        const RamInsert& insert, RamEnvironment& env, std::ostream* profile) -> ExecutionSummary {
     // measure the time
     auto start = now();
 
     // simplest strategy of all - just apply the nested operation
-    apply(insert.getOperation(), env);
+    auto numIters = apply(insert.getOperation(), env);
 
     // create report
     auto end = now();
+
+    if (profile) {
+        auto lease = getOutputLock().acquire();
+        (void)lease;
+        *profile << insert.getLabel() << numIters << "\n";
+    }
+
     return ExecutionSummary(
             {Order::getIdentity(insert.getOrigin().getAtoms().size()), duration_in_ms(start, end)});
 };
 
 /** With this strategy queries will be dynamically rescheduled before each execution */
 const QueryExecutionStrategy ScheduledExecution = [](
-        const RamInsert& insert, RamEnvironment& env, std::ostream* report) -> ExecutionSummary {
+        const RamInsert& insert, RamEnvironment& env, std::ostream* profile) -> ExecutionSummary {
 
     // Report scheduling
     // TODO: only re-schedule atoms (avoid cloning entire clause)
     std::unique_ptr<AstClause> clause(insert.getOrigin().clone());
 
     Order order;
+
     bool changed = false;
+    bool report = Global::config().has("verbose");
 
     // (re-)schedule clause
     {
@@ -1072,12 +1081,12 @@ const QueryExecutionStrategy ScheduledExecution = [](
         auto end = now();
         changed = !equal_targets(insert.getOrigin().getAtoms(), clause->getAtoms());
         if (changed && report) {
-            *report << "\nScheduling clause @ " << clause->getSrcLoc() << "\n";
-            *report << ss.str();
-            *report << "    Original Query: " << insert.getOrigin() << "\n";
-            *report << "       Rescheduled: " << *clause << "\n";
-            *report << "            Order has Changed!\n";
-            *report << "   Scheduling Time: " << duration_in_ms(start, end) << "ms\n";
+            std::cout << "\nScheduling clause @ " << clause->getSrcLoc() << "\n";
+            std::cout << ss.str();
+            std::cout << "    Original Query: " << insert.getOrigin() << "\n";
+            std::cout << "       Rescheduled: " << *clause << "\n";
+            std::cout << "            Order has Changed!\n";
+            std::cout << "   Scheduling Time: " << duration_in_ms(start, end) << "ms\n";
         }
     }
 
@@ -1092,8 +1101,14 @@ const QueryExecutionStrategy ScheduledExecution = [](
     auto end = now();
     auto runtime = duration_in_ms(start, end);
     if (changed && report) {
-        *report << "           Runtime: " << runtime << "ms\n";
-        *report << "           Iterations: " << numIters << "\n";
+        std::cout << "           Runtime: " << runtime << "ms\n";
+        std::cout << "           Iterations: " << numIters << "\n";
+    }
+
+    if (profile) {
+        auto lease = getOutputLock().acquire();
+        (void)lease;
+        *profile << insert.getLabel() << numIters << "\n";
     }
 
     return ExecutionSummary({order, runtime});
