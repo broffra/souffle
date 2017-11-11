@@ -186,7 +186,8 @@ int main(int argc, char** argv) {
         }
 
         /* ensure that if auto-scheduling is enabled an output file is given */
-        if (Global::config().has("auto-schedule") && !Global::config().has("dl-program")) {
+        if (!Global::config().has("log-iterations") &&
+                Global::config().has("auto-schedule") && !Global::config().has("dl-program")) {
             ERROR("no executable is specified for auto-scheduling (option -o <FILE>)");
         }
 
@@ -353,10 +354,6 @@ int main(int argc, char** argv) {
         std::cerr << translationUnit->getErrorReport();
     }
 
-    // only log either runtime or iterations
-    const bool logIterations = Global::config().has("log-iterations");
-    const bool logRuntime = logIterations ? false : Global::config().has("profile");
-
     // ------- (optional) conversions -------------
 
     // conduct the bddbddb file export
@@ -380,6 +377,10 @@ int main(int argc, char** argv) {
     // ------- execution -------------
 
     auto ram_start = std::chrono::high_resolution_clock::now();
+
+    // only log either runtime or iterations
+    const bool logIterations = Global::config().has("log-iterations");
+    const bool logRuntime = logIterations ? false : Global::config().has("profile");
 
     /* translate AST to RAM */
     std::unique_ptr<RamProgram> ramProg =
@@ -439,7 +440,9 @@ int main(int argc, char** argv) {
         }
 #endif
 
-    } else {
+    // for testing the scheduler, do not proceed to compilation, since
+    // by this stage, the AutoScheduleTransformer has already created the profile
+    } else if (!logIterations) {
         // ------- compiler -------------
 
         std::vector<std::unique_ptr<RamProgram>> strata;
