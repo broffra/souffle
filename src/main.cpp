@@ -127,6 +127,9 @@ int main(int argc, char** argv) {
                                     "binary executable (without executing it)."},
                             {"profile", 'p', "FILE", "", false,
                                     "Enable profiling, and write profile data to <FILE>."},
+                            {"log-iterations", 'i', "", "", false,
+                                    "If profiling with -p, log the number of iterations for each rule "
+                                    "instead of their runtime data."},
                             {"bddbddb", 'b', "FILE", "", false, "Convert input into bddbddb file format."},
                             {"debug-report", 'r', "FILE", "", false, "Write HTML debug report to <FILE>."},
                             {"fault-tolerance", 'f', "", "", false,
@@ -185,6 +188,11 @@ int main(int argc, char** argv) {
         /* ensure that if auto-scheduling is enabled an output file is given */
         if (Global::config().has("auto-schedule") && !Global::config().has("dl-program")) {
             ERROR("no executable is specified for auto-scheduling (option -o <FILE>)");
+        }
+
+        /* ensure that if log-iterations is enabled a profile file is given */
+        if (Global::config().has("log-iterations") && !Global::config().has("profile")) {
+            ERROR("no profile is specified for logging iterations (option -p <FILE>)");
         }
 
         /* collect all input directories for the c pre-processor */
@@ -345,6 +353,10 @@ int main(int argc, char** argv) {
         std::cerr << translationUnit->getErrorReport();
     }
 
+    // only log either runtime or iterations
+    const bool logIterations = Global::config().has("log-iterations");
+    const bool logRuntime = logIterations ? false : Global::config().has("profile");
+
     // ------- (optional) conversions -------------
 
     // conduct the bddbddb file export
@@ -371,7 +383,7 @@ int main(int argc, char** argv) {
 
     /* translate AST to RAM */
     std::unique_ptr<RamProgram> ramProg =
-            RamTranslator(Global::config().has("profile")).translateProgram(*translationUnit);
+            RamTranslator(logRuntime, logIterations).translateProgram(*translationUnit);
 
     if (!Global::config().get("debug-report").empty()) {
         if (ramProg) {
