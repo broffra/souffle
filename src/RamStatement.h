@@ -237,6 +237,8 @@ class RamInsert : public RamStatement {
 
     std::unique_ptr<RamOperation> operation;
 
+    std::string label;
+
 public:
     RamInsert(const AstClause& clause, std::unique_ptr<RamOperation> o)
             : RamStatement(RN_Insert), clause(std::unique_ptr<const AstClause>(clause.clone())),
@@ -250,6 +252,14 @@ public:
 
     const RamOperation& getOperation() const {
         return *operation;
+    }
+
+    void setLabel(std::string txt) {
+        label = txt;
+    }
+
+    const std::string& getLabel() const {
+        return label;
     }
 
     void print(std::ostream& os, int tabpos) const override {

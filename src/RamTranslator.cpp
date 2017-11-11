@@ -835,6 +835,11 @@ std::unique_ptr<RamStatement> RamTranslator::translateNonRecursiveRelation(const
             line << clause->getSrcLoc() << ";";
             line << clauseText << ";";
             std::string label = line.str();
+
+            if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
+                insert->setLabel("@i-" + label);
+            }
+
             rule = std::unique_ptr<RamStatement>(new RamSequence(
                     std::unique_ptr<RamStatement>(new RamLogTimer(std::move(rule), "@t-" + label)),
                     std::make_unique<RamLogSize>(rrel, "@n-" + label)));
@@ -1042,6 +1047,11 @@ std::unique_ptr<RamStatement> RamTranslator::translateRecursiveRelation(
                     line << cl->getSrcLoc() << ";";
                     line << clauseText << ";";
                     std::string label = line.str();
+
+                    if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
+                        insert->setLabel("@i-" + label);
+                    }
+
                     rule = std::unique_ptr<RamStatement>(new RamSequence(
                             std::unique_ptr<RamStatement>(new RamLogTimer(std::move(rule), "@t-" + label)),
                             std::make_unique<RamLogSize>(relNew[rel], "@n-" + label)));
