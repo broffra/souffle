@@ -828,7 +828,7 @@ std::unique_ptr<RamStatement> RamTranslator::translateNonRecursiveRelation(const
         std::unique_ptr<RamStatement> rule = translateClause(*clause, program, &typeEnv);
 
         // add logging
-        if (logging) {
+        if (logging || logIterations) {
             std::string clauseText = stringify(toString(*clause));
             std::ostringstream line;
             line << "nonrecursive-rule;" << rel.getName() << ";";
@@ -836,13 +836,14 @@ std::unique_ptr<RamStatement> RamTranslator::translateNonRecursiveRelation(const
             line << clauseText << ";";
             std::string label = line.str();
 
-            if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
+            // log runtime or iteration counts
+            if (logging) {
+                rule = std::unique_ptr<RamStatement>(new RamSequence(
+                        std::unique_ptr<RamStatement>(new RamLogTimer(std::move(rule), "@t-" + label)),
+                        std::make_unique<RamLogSize>(rrel, "@n-" + label)));
+            } else if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
                 insert->setLabel("@i-" + label);
             }
-
-            rule = std::unique_ptr<RamStatement>(new RamSequence(
-                    std::unique_ptr<RamStatement>(new RamLogTimer(std::move(rule), "@t-" + label)),
-                    std::make_unique<RamLogSize>(rrel, "@n-" + label)));
         }
 
         // add debug info
@@ -1039,7 +1040,7 @@ std::unique_ptr<RamStatement> RamTranslator::translateRecursiveRelation(
                 std::unique_ptr<RamStatement> rule = translateClause(*r1, program, &typeEnv, version);
 
                 /* add logging */
-                if (logging) {
+                if (logging || logIterations) {
                     std::string clauseText = stringify(toString(*cl));
                     std::ostringstream line;
                     line << "recursive-rule;" << rel->getName() << ";";
@@ -1048,13 +1049,14 @@ std::unique_ptr<RamStatement> RamTranslator::translateRecursiveRelation(
                     line << clauseText << ";";
                     std::string label = line.str();
 
-                    if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
+                    // log runtime or iteration counts
+                    if (logging) {
+                        rule = std::unique_ptr<RamStatement>(new RamSequence(
+                                std::unique_ptr<RamStatement>(new RamLogTimer(std::move(rule), "@t-" + label)),
+                                std::make_unique<RamLogSize>(relNew[rel], "@n-" + label)));
+                    } else if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
                         insert->setLabel("@i-" + label);
                     }
-
-                    rule = std::unique_ptr<RamStatement>(new RamSequence(
-                            std::unique_ptr<RamStatement>(new RamLogTimer(std::move(rule), "@t-" + label)),
-                            std::make_unique<RamLogSize>(relNew[rel], "@n-" + label)));
                 }
 
                 // add debug info

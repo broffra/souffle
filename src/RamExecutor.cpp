@@ -1050,7 +1050,8 @@ const QueryExecutionStrategy DirectExecution = [](
     // create report
     auto end = now();
 
-    if (profile) {
+    // log iteration counts
+    if (profile && Global::config().has("log-iterations")) {
         auto lease = getOutputLock().acquire();
         (void)lease;
         *profile << insert.getLabel() << numIters << "\n";
@@ -1105,7 +1106,8 @@ const QueryExecutionStrategy ScheduledExecution = [](
         std::cout << "           Iterations: " << numIters << "\n";
     }
 
-    if (profile) {
+    // log iteration counts
+    if (profile && Global::config().has("log-iterations")) {
         auto lease = getOutputLock().acquire();
         (void)lease;
         *profile << insert.getLabel() << numIters << "\n";

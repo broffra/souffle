@@ -141,7 +141,9 @@ bool AutoScheduleTransformer::autotune(AstTranslationUnit& translationUnit, std:
         std::cout << "[ Converting to RAM Program ...                           ]\n";
     }
 
-    std::unique_ptr<RamProgram> prog = RamTranslator().translateProgram(translationUnit);
+    /* translate AST to RAM */
+    std::unique_ptr<RamProgram> prog =
+            RamTranslator(false, Global::config().has("log-iterations")).translateProgram(translationUnit);
     const RamStatement* stmt = prog->getMain();
 
     // check whether there is something to tune

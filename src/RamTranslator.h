@@ -43,13 +43,20 @@ class RamTranslator {
     /** If true, created constructs will be annotated with logging information */
     bool logging;
 
+    /** If true, the iteration counts of insert operations will be logged */
+    bool logIterations;
+
 public:
     /**
      * A constructor for this translators.
      *
      * @param logging if generated clauses should be annotated with logging operations
+     * @param logIterations if the iteration counts of insert operations should be logged
      */
-    RamTranslator(bool logging = false) : logging(logging) {}
+    RamTranslator(bool logging = false, bool logIterations = false) : logging(logging),
+            logIterations(logIterations) {
+        assert(!(logging && logIterations) && "Can only log either runtime or iterations");
+    }
 
     /**
      * Converts the given relation identifier into a relation name.
