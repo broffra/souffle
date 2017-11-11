@@ -68,11 +68,15 @@ public:
 
     void rul(std::string c);
 
+    void iter(std::string c);
+
     void id(std::string col);
 
     void relRul(std::string str);
 
     void verRul(std::string str);
+
+    void verIter(std::string str);
 
     void iterRel(std::string c, std::string col);
 
