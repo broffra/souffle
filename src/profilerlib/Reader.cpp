@@ -151,6 +151,8 @@ void Reader::addIteration(std::shared_ptr<Relation> rel, std::vector<std::string
     } else if (data[0].at(0) == 'c' && data[0].find("relation") != std::string::npos) {
         iter->setCopy_time(std::stod(data[3]));
         rel->setReady(true);
+    } else if (data[0].at(0) == 'u') {
+        rel->setReady(true);
     }
 }
 
