@@ -444,9 +444,9 @@ void Tui::help() {
     std::printf("  %-30s%-5s %-10s\n", "graph <relation id> <type>", "-",
             "graph a relation by type: (tot_t/copy_t/tuples).");
     std::printf("  %-30s%-5s %-10s\n", "graph <rule id> <type>", "-",
-            "graph recursive(C) rule by type(tot_t/tuples).");
+            "graph recursive(C) rule by type(tot_t/tuples/iter).");
     std::printf("  %-30s%-5s %-10s\n", "graph ver <rule id> <type>", "-",
-            "graph recursive(C) rule versions by type(tot_t/copy_t/tuples).");
+            "graph recursive(C) rule versions by type(tot_t/copy_t/tuples/iter).");
     std::printf("  %-30s%-5s %-10s\n", "top", "-", "display top-level summary of program run.");
     std::printf("  %-30s%-5s %-10s\n", "help", "-", "print this.");
 
@@ -787,6 +787,23 @@ void Tui::iterRul(std::string c, std::string col) {
                 }
                 std::printf("%4s   %-6s\n\n", "NO", "TUPLES");
                 graphL(list);
+            } else if (col.compare("iter") == 0) {
+                std::vector<long> list;
+                for (auto& i : iter) {
+                    bool add = false;
+                    long tot_iterations = 0;
+                    for (auto& rul : i->getRul_rec()) {
+                        if (rul.second->getId().compare(c) == 0) {
+                            tot_iterations += rul.second->getNum_iterations();
+                            add = true;
+                        }
+                    }
+                    if (add) {
+                        list.emplace_back(tot_iterations);
+                    }
+                }
+                std::printf("%4s   %-6s\n\n", "NO", "ITERATIONS");
+                graphL(list);
             }
             break;
         }
@@ -825,6 +842,13 @@ void Tui::verGraph(std::string c, std::string col) {
             list.emplace_back((*row)[4]->getLongVal());
         }
         std::printf("%4s   %-6s\n\n", "NO", "TUPLES");
+        graphL(list);
+    } else if (col.compare("iter") == 0) {
+        std::vector<long> list;
+        for (auto& row : ver_table.rows) {
+            list.emplace_back((*row)[10]->getLongVal());
+        }
+        std::printf("%4s   %-6s\n\n", "NO", "ITERATIONS");
         graphL(list);
     }
 }
