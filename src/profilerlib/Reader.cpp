@@ -172,6 +172,10 @@ void Reader::addRule(std::shared_ptr<Relation> rel, std::vector<std::string> dat
         assert(_rul != nullptr);
         _rul->setNum_tuples(std::stol(data[4]) - prev_num_tuples);
         rel->setPrev_num_tuples(std::stol(data[4]));
+    } else if (data[0].at(0) == 'i') {
+        _rul->setNum_iterations(std::stol(data[4]));
+        _rul->setLocator(data[2]);
+        _rul->setLineNumber();
     }
 }
 

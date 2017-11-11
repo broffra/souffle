@@ -21,6 +21,7 @@ protected:
     std::string name;
     double runtime = 0;
     long num_tuples = 0;
+    long num_iterations = 0;
     std::string identifier;
     std::string locator = "";
     int lineNumber = -1;
@@ -47,12 +48,20 @@ public:
         return num_tuples;
     }
 
+    inline long getNum_iterations() {
+        return num_iterations;
+    }
+
     inline void setRuntime(double runtime) {
         this->runtime = runtime;
     }
 
     inline void setNum_tuples(long num_tuples) {
         this->num_tuples = num_tuples;
+    }
+
+    inline void setNum_iterations(long num_iterations) {
+        this->num_iterations = num_iterations;
     }
 
     inline std::string getName() {
