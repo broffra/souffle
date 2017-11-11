@@ -966,6 +966,10 @@ std::unique_ptr<RamStatement> RamTranslator::translateRecursiveRelation(
             std::ostringstream ost, osn;
             ost << "@c-recursive-relation;" << rel->getName() << ";" << rel->getSrcLoc() << ";";
             updateRelTable = std::make_unique<RamLogTimer>(std::move(updateRelTable), ost.str());
+        } else if (logIterations) {
+            std::ostringstream ost;
+            ost << "@u-recursive-relation;" << rel->getName() << ";" << rel->getSrcLoc();
+            updateRelTable = std::make_unique<RamLogTimer>(std::move(updateRelTable), ost.str());
         }
 
         /* drop temporary tables after recursion */

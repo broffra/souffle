@@ -64,8 +64,11 @@ public:
 
         auto leas = getOutputLock().acquire();
         (void)leas;  // avoid warning
-        out << label << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count()
-            << std::endl;
+        out << label;
+        if (label[1] != 'u') {
+            out << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count();
+        }
+        out << std::endl;
     }
 };
 
