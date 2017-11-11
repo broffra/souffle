@@ -1071,8 +1071,7 @@ const QueryExecutionStrategy ScheduledExecution = [](
 
     Order order;
 
-    bool changed = false;
-    bool report = Global::config().has("verbose");
+    bool changed, verbose = Global::config().has("verbose");
 
     // (re-)schedule clause
     {
@@ -1081,7 +1080,7 @@ const QueryExecutionStrategy ScheduledExecution = [](
         order = scheduleByModel(*clause, env, &ss);
         auto end = now();
         changed = !equal_targets(insert.getOrigin().getAtoms(), clause->getAtoms());
-        if (changed && report) {
+        if (changed && verbose) {
             std::cout << "\nScheduling clause @ " << clause->getSrcLoc() << "\n";
             std::cout << ss.str();
             std::cout << "    Original Query: " << insert.getOrigin() << "\n";
@@ -1101,7 +1100,7 @@ const QueryExecutionStrategy ScheduledExecution = [](
     auto numIters = apply(static_cast<RamInsert*>(stmt.get())->getOperation(), env);
     auto end = now();
     auto runtime = duration_in_ms(start, end);
-    if (changed && report) {
+    if (changed && verbose) {
         std::cout << "           Runtime: " << runtime << "ms\n";
         std::cout << "           Iterations: " << numIters << "\n";
     }
