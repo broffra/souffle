@@ -841,8 +841,10 @@ std::unique_ptr<RamStatement> RamTranslator::translateNonRecursiveRelation(const
                 rule = std::unique_ptr<RamStatement>(new RamSequence(
                         std::unique_ptr<RamStatement>(new RamLogTimer(std::move(rule), "@t-" + label)),
                         std::make_unique<RamLogSize>(rrel, "@n-" + label)));
-            } else if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
-                insert->setLabel("@i-" + label);
+            } else if (!Global::config().has("compress-profile")) {
+                if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
+                    insert->setLabel("@i-" + label);
+                }
             }
         }
 
@@ -966,7 +968,7 @@ std::unique_ptr<RamStatement> RamTranslator::translateRecursiveRelation(
             std::ostringstream ost, osn;
             ost << "@c-recursive-relation;" << rel->getName() << ";" << rel->getSrcLoc() << ";";
             updateRelTable = std::make_unique<RamLogTimer>(std::move(updateRelTable), ost.str());
-        } else if (logIterations) {
+        } else if (logIterations && !Global::config().has("compress-profile")) {
             std::ostringstream ost;
             ost << "@u-recursive-relation;" << rel->getName() << ";" << rel->getSrcLoc();
             updateRelTable = std::make_unique<RamLogTimer>(std::move(updateRelTable), ost.str());
@@ -1058,8 +1060,10 @@ std::unique_ptr<RamStatement> RamTranslator::translateRecursiveRelation(
                         rule = std::unique_ptr<RamStatement>(new RamSequence(
                                 std::unique_ptr<RamStatement>(new RamLogTimer(std::move(rule), "@t-" + label)),
                                 std::make_unique<RamLogSize>(relNew[rel], "@n-" + label)));
-                    } else if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
-                        insert->setLabel("@i-" + label);
+                    } else if (!Global::config().has("compress-profile")) {
+                        if (auto insert = dynamic_cast<RamInsert*>(rule.get())) {
+                            insert->setLabel("@i-" + label);
+                        }
                     }
                 }
 
