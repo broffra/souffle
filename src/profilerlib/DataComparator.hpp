@@ -59,6 +59,10 @@ public:
         return b->cells[6]->getStringVal() > a->cells[6]->getStringVal();
     }
 
+    static bool ITER(std::shared_ptr<Row> a, std::shared_ptr<Row> b) {  // Iterations
+        return b->cells[12]->getLongVal() < a->cells[12]->getLongVal();
+    }
+
     // sort doubles by pointer reference if the values are NaN so ordering of values are the same
     // TODO: add the same for infinite... shouldn't be necessary for souffle
     static bool compare_doubles(double a, double b) {

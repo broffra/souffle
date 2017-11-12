@@ -28,6 +28,9 @@ void Table::sort(int col_num) {
         case 6:
             std::sort(rows.begin(), rows.end(), DataComparator::NAME);
             break;
+        case 7:
+            std::sort(rows.begin(), rows.end(), DataComparator::ITER);
+            break;
         case 0:
         default:  // if the col_num isn't defined just use TIME... TODO: consider printing warning?
             std::sort(rows.begin(), rows.end(), DataComparator::TIME);
