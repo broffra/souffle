@@ -87,6 +87,9 @@ void setFixedExecutionPlans(const AstProgram* program) {
     // relation names
     std::set<std::string> relsToSchedule;
 
+    // line numbers
+    std::set<int> linesToSchedule;
+
     // (relation name, line) pairs
     std::set<std::tuple<std::string, int>> rulesToSchedule;
 
@@ -98,14 +101,22 @@ void setFixedExecutionPlans(const AstProgram* program) {
                 continue;
             } catch (const std::invalid_argument&) {}
         }
-        relsToSchedule.insert(token);
+        try {
+            linesToSchedule.insert(std::stoi(token));
+        } catch (const std::invalid_argument&) {
+            relsToSchedule.insert(token);
+        }
     }
 
     for (AstRelation* rel : program->getRelations()) {
         std::string relName = rel->getName().getNames()[0];
         if (!contains(relsToSchedule, relName)) {
             for (AstClause* clause : rel->getClauses()) {
-                if (!contains(rulesToSchedule, std::make_tuple(relName, clause->getSrcLoc().start.line))) {
+                // only schedule one rule per line to speed things up
+                int line = clause->getSrcLoc().start.line;
+                if (contains(linesToSchedule, line)) {
+                    linesToSchedule.erase(line);
+                } else if (!contains(rulesToSchedule, std::make_tuple(relName, line))) {
                     clause->setFixedExecutionPlan();
                 }
             }
