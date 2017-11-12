@@ -132,6 +132,8 @@ int main(int argc, char** argv) {
                             {"log-iterations", 'i', "", "", false,
                                     "If profiling with -p, log the number of iterations for each rule "
                                     "instead of their runtime data."},
+                            {"compress-profile", 'C', "", "", false,
+                                    "If logging iterations with -i, log the iteration counts one per line."},
                             {"bddbddb", 'b', "FILE", "", false, "Convert input into bddbddb file format."},
                             {"debug-report", 'r', "FILE", "", false, "Write HTML debug report to <FILE>."},
                             {"fault-tolerance", 'f', "", "", false,
@@ -196,6 +198,11 @@ int main(int argc, char** argv) {
         /* ensure that if log-iterations is enabled a profile file is given */
         if (Global::config().has("log-iterations") && !Global::config().has("profile")) {
             ERROR("no profile is specified for logging iterations (option -p <FILE>)");
+        }
+
+        /* ensure that if compress-profile is enabled we are logging iterations */
+        if (Global::config().has("compress-profile") && !Global::config().has("log-iterations")) {
+            ERROR("only iteration logs can be compressed (option -i <FILE>)");
         }
 
         /* collect all input directories for the c pre-processor */
