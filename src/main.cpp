@@ -112,9 +112,11 @@ int main(int argc, char** argv) {
                             {"compile", 'c', "", "", false,
                                     "Generate C++ source code, compile to a binary executable, then run this "
                                     "executable."},
-                            {"auto-schedule", 'a', "LINES", "", false,
+                            {"auto-schedule", 'a', "RULES", "", false,
                                     "Switch on automated clause scheduling for compiler on the given line "
-                                    "numbers or relation names, leave blank for all."},
+                                    "numbers or relation names, leave blank for all. The comma-separated "
+                                    "arguments can be of the form 'relation_name;line_number' to select a "
+                                    "specific rule, or 'relation_name' to select all rules for a relation."},
                             {"generate", 'g', "FILE", "", false,
                                     "Generate C++ source code for the given Datalog program and write it to "
                                     "<FILE>."},
