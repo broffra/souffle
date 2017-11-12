@@ -242,7 +242,7 @@ class RamInsert : public RamStatement {
 public:
     RamInsert(const AstClause& clause, std::unique_ptr<RamOperation> o)
             : RamStatement(RN_Insert), clause(std::unique_ptr<const AstClause>(clause.clone())),
-              operation(std::move(o)) {}
+              operation(std::move(o)), label() {}
 
     ~RamInsert() override = default;
 
