@@ -495,7 +495,7 @@ void Tui::rul(std::string c) {
 }
 
 void Tui::iter(std::string c) {
-    rul_table_state.sort(sort_col);
+    rul_table_state.sort(sort_col < 5 ? 7 : sort_col);
     std::cout << "  ----- Iterations Table -----\n";
     std::printf(
             "%13s%8s%8s %-25s\n\n", "ITERATIONS", "ID", "LINE", "RELATION");
