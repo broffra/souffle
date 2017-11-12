@@ -369,7 +369,9 @@ int main(int argc, char** argv) {
 
     // for testing the scheduler, do not proceed to compilation, since
     // by this stage, the AutoScheduleTransformer has already created the profile
-    if (logIterations) {
+    if (logIterations && Global::config().has("auto-schedule") &&
+            !Global::config().has("compile") && !Global::config().has("dl-program") &&
+            !Global::config().has("generate")) {
             /* Report overall run-time in verbose mode */
             if (Global::config().has("verbose")) {
                 auto souffle_end = std::chrono::high_resolution_clock::now();
