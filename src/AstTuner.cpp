@@ -84,21 +84,28 @@ bool contains(std::set<T> set, T element) {
 // ensures that every relation or rule not specified by
 // the auto-schedule option is ignored by the scheduler
 void setFixedExecutionPlans(const AstProgram* program) {
+    // relation names
     std::set<std::string> relsToSchedule;
-    std::set<int> rulesToSchedule;
+
+    // (relation name, line) pairs
+    std::set<std::tuple<std::string, int>> rulesToSchedule;
 
     for (std::string token : split(Global::config().get("auto-schedule"), ',')) {
-        try {
-            rulesToSchedule.insert(std::stoi(token));
-        } catch (const std::invalid_argument& e) {
-            relsToSchedule.insert(token);
+        std::vector<std::string> vec = split(token, ';');
+        if (vec.size() == 2) {
+            try {
+                rulesToSchedule.insert(std::make_tuple(vec[0], std::stoi(vec[1])));
+                continue;
+            } catch (const std::invalid_argument&) {}
         }
+        relsToSchedule.insert(token);
     }
 
     for (AstRelation* rel : program->getRelations()) {
-        if (!contains(relsToSchedule, rel->getName().getNames()[0])) {
+        std::string relName = rel->getName().getNames()[0];
+        if (!contains(relsToSchedule, relName)) {
             for (AstClause* clause : rel->getClauses()) {
-                if (!contains(rulesToSchedule, clause->getSrcLoc().start.line)) {
+                if (!contains(rulesToSchedule, std::make_tuple(relName, clause->getSrcLoc().start.line))) {
                     clause->setFixedExecutionPlan();
                 }
             }
