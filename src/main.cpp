@@ -354,6 +354,22 @@ int main(int argc, char** argv) {
         std::cerr << translationUnit->getErrorReport();
     }
 
+    // only log either runtime or iterations
+    const bool logIterations = Global::config().has("log-iterations");
+    const bool logRuntime = logIterations ? false : Global::config().has("profile");
+
+    // for testing the scheduler, do not proceed to compilation, since
+    // by this stage, the AutoScheduleTransformer has already created the profile
+    if (logIterations) {
+            /* Report overall run-time in verbose mode */
+            if (Global::config().has("verbose")) {
+                auto souffle_end = std::chrono::high_resolution_clock::now();
+                std::cout << "Total Time: " << std::chrono::duration<double>(souffle_end - souffle_start).count()
+                          << "sec\n";
+            }
+            return 0;
+    }
+
     // ------- (optional) conversions -------------
 
     // conduct the bddbddb file export
@@ -377,10 +393,6 @@ int main(int argc, char** argv) {
     // ------- execution -------------
 
     auto ram_start = std::chrono::high_resolution_clock::now();
-
-    // only log either runtime or iterations
-    const bool logIterations = Global::config().has("log-iterations");
-    const bool logRuntime = logIterations ? false : Global::config().has("profile");
 
     /* translate AST to RAM */
     std::unique_ptr<RamProgram> ramProg =
@@ -440,9 +452,7 @@ int main(int argc, char** argv) {
         }
 #endif
 
-    // for testing the scheduler, do not proceed to compilation, since
-    // by this stage, the AutoScheduleTransformer has already created the profile
-    } else if (!logIterations) {
+    } else {
         // ------- compiler -------------
 
         std::vector<std::unique_ptr<RamProgram>> strata;
