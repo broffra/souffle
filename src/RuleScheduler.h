@@ -8,7 +8,7 @@
 
 /************************************************************************
  *
- * @file QueryOptimizer.h
+ * @file RuleScheduler.h
  *
  * A set of generic utilities to optimize queries.
  *
@@ -249,7 +249,7 @@ public:
         }
 
         // print some debugging
-        if (debug) {
+        if (false) {
             std::cout << "Processing Problem: " << atoms << "\n";
 
             // list of memorized results
@@ -291,7 +291,7 @@ public:
             }
         }
 
-        if (debug) {
+        if (false) {
             std::cout << "Results:\n"
                       << join(cache, "\n",
                                  [](std::ostream& out, const std::pair<int, map<plan, state_type>>& cur) {
@@ -310,6 +310,28 @@ public:
                                  })
                       << "\n";
             std::cout << "Solution: " << bestPlan << "\n";
+        }
+
+        if (debug) {
+            // the set of bound variables
+            std::set<Var> bound;
+
+            // the number of equi-joins in this rule
+            std::size_t numJoins = 0;
+
+            // compute the number of bound variables
+            for (const atom_type& atom : atoms) {
+                for (const Var& var : atom.getVariables()) {
+                    if (bound.find(var) == bound.end()) {
+                        bound.insert(var);
+                    } else {
+                        numJoins++;
+                    }
+                }
+            }
+
+            // output cardinality estimate information
+            std::cout << numJoins << "\t" << best.getCost() << "\t";
         }
 
         // return best plan
@@ -549,7 +571,8 @@ struct SimpleComputationalCostModel
         }
 
         // compute full computation costs per iteration
-        Cost costPerCall = (someAttributsBound) ? log(atom.getCardinality()) : 1;
+        // Cost costPerCall = (someAttributsBound) ? log(atom.getCardinality()) : 1;
+        Cost costPerCall = 1;
 
         // increase total costs
         res.incCost(costPerCall * state.getInnermostIterations());

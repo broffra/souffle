@@ -8,7 +8,7 @@
 
 /************************************************************************
  *
- * @file RamRelationStats.h.h
+ * @file RamRelationStats.cpp
  *
  * A set of utilities for extracting and handling statistical data on
  * the data stored within relations.

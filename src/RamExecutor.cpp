@@ -966,7 +966,7 @@ Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostringstream
     //  9 atoms require  ~2400ms to schedule
     // 10 atoms require ~29000ms to schedule
     // 11 atoms => out of memory
-    if (clause.getAtoms().size() > 8) {
+    if (false) {
         return Order::getIdentity(clause.getAtoms().size());
     }
 
@@ -1016,7 +1016,7 @@ Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostringstream
     }
 
     // solve the optimization problem
-    auto schedule = p.solve();
+    auto schedule = p.solve(report);
 
     // extract order
     Order res;
@@ -1077,10 +1077,14 @@ const QueryExecutionStrategy ScheduledExecution = [](
     {
         std::ostringstream ss;
         auto start = now();
-        order = scheduleByModel(*clause, env, &ss);
+        if (verbose) {
+            order = scheduleByModel(*clause, env, &ss);
+        } else {
+            order = scheduleByModel(*clause, env, nullptr);
+        }
         auto end = now();
         changed = !equal_targets(insert.getOrigin().getAtoms(), clause->getAtoms());
-        if (changed && verbose) {
+        if (false) {
             std::cout << "\nScheduling clause @ " << clause->getSrcLoc() << "\n";
             std::cout << ss.str();
             std::cout << "    Original Query: " << insert.getOrigin() << "\n";
@@ -1100,9 +1104,10 @@ const QueryExecutionStrategy ScheduledExecution = [](
     auto numIters = apply(static_cast<RamInsert*>(stmt.get())->getOperation(), env);
     auto end = now();
     auto runtime = duration_in_ms(start, end);
-    if (changed && verbose) {
-        std::cout << "           Runtime: " << runtime << "ms\n";
-        std::cout << "           Iterations: " << numIters << "\n";
+    if (!clause->hasFixedExecutionPlan() && clause->getAtoms().size() >= 2 && verbose) {
+        std::cout << numIters << "\n";
+        // std::cout << "           Runtime: " << runtime << "ms\n";
+        // std::cout << "           Iterations: " << numIters << "\n";
     }
 
     // log iteration counts
