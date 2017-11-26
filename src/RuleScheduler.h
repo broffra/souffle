@@ -263,7 +263,8 @@ public:
         for (unsigned n = 1; n <= atoms.size(); n++) {
             for (const auto& cur : cache[n - 1]) {
                 const plan& subPlan = cur.first;
-                const state_type& inState = cur.second;
+                const state_type& tmpState = cur.second;
+                state_type inState = tmpState;
 
                 for (const auto& cur : atoms) {
                     // only add non-covered steps
@@ -414,7 +415,7 @@ struct cost_model {
      * Obtains the state reached when appending the given atom to a plan
      * resulting in the given state.
      */
-    virtual State applyTo(const State& state, const Atom& atom) const = 0;
+    virtual State applyTo(State& state, const Atom& atom) const = 0;
 };
 
 // ----------------------------------------------------------------------
@@ -452,7 +453,7 @@ public:
  * default.
  */
 struct MaxBindingModel : public cost_model<Atom, BindingState> {
-    BindingState applyTo(const BindingState& state, const Atom& atom) const override {
+    BindingState applyTo(BindingState& state, const Atom& atom) const override {
         BindingState res = state;
 
         // adding this relation costs 1 unit
@@ -540,7 +541,7 @@ public:
  */
 struct SimpleComputationalCostModel
         : public cost_model<SimpleComputationalCostAtom, SimpleComputationalCostState> {
-    SimpleComputationalCostState applyTo(const SimpleComputationalCostState& state,
+    SimpleComputationalCostState applyTo(SimpleComputationalCostState& state,
             const SimpleComputationalCostAtom& atom) const override {
         SimpleComputationalCostState res = state;
 
@@ -674,7 +675,7 @@ public:
  * to be inferior to the simple cost model.
  */
 struct ComputeCostModel : public cost_model<ComputeCostAtom, ComputeCostState> {
-    ComputeCostState applyTo(const ComputeCostState& state, const ComputeCostAtom& atom) const override {
+    ComputeCostState applyTo(ComputeCostState& state, const ComputeCostAtom& atom) const override {
         ComputeCostState res = state;
 
         const RamRelationStats& stats = atom.getRelationStats();
@@ -720,6 +721,112 @@ struct ComputeCostModel : public cost_model<ComputeCostAtom, ComputeCostState> {
 };
 
 // ----------------------------------------------------------------------
+//                     Fan-in Fan-out Cost Model
+// ----------------------------------------------------------------------
+
+/**
+ * An extended version of the atom utilized by the computational cost model
+ * which is depending on additional distinct value statistical information.
+ */
+class FifoCostAtom : public Atom {
+    DistinctValueStats stats;
+
+public:
+    FifoCostAtom(int id, const std::vector<Argument>& args, const DistinctValueStats& stats)
+            : Atom(id, args), stats(stats) {
+        assert(args.size() == stats.getArity());
+    }
+
+    const DistinctValueStats& getRelationStats() const {
+        return stats;
+    }
+
+    void print(std::ostream& out) const override {
+        out << "<" << getID() << ">|" << stats.getCardinality() << "," << getRelationStats() << "|( "
+            << getArguments() << " )";
+    }
+};
+
+/**
+ * The state associated to the fan-in fan-out cost model maintaining
+ * the current join rel's estimated statistics.
+ */
+class FifoCostState : public ComputeCostState {
+    DistinctValueStats stats;
+
+public:
+    FifoCostState() : ComputeCostState(), stats(0) {}
+
+    DistinctValueStats& getRelationStats() {
+        return stats;
+    }
+
+    void setRelationStats(const DistinctValueStats& s) {
+        stats = s;
+    }
+};
+
+/**
+ * The fan-in fan-out model tries to estimate the costs for computing
+ * a plan by maintaining estimates for the number of different values
+ * variables may be bound to at various stages of the execution of a
+ * plan.
+ */
+struct FifoCostModel : public cost_model<FifoCostAtom, FifoCostState> {
+    FifoCostState applyTo(FifoCostState& state, const FifoCostAtom& atom) const override {
+        DistinctValueStats& stats = state.getRelationStats();
+
+        const DistinctValueStats& atomStats = atom.getRelationStats();
+        const std::vector<Argument>& args = atom.getArguments();
+
+        // multiplier factor of this loop operation
+        uint64_t f = 1;
+        for (unsigned i = 0; i < args.size(); i++) {
+            const Argument& arg = args[i];
+            if (arg.isConstant()) {
+                // TODO: if the sample size of our statistics is the whole relation
+                // and the constant does not exist in our distinct values set, then
+                // it must be that the number of iterations at this level is 0
+                f *= atomStats.getNumDistinct(i);
+            } else if (arg.isVariable()) {
+                if (state.isBound(arg)) {
+                    const btree_set<RamDomain>& dv1 = stats.getColumn(arg);
+                    const btree_set<RamDomain>& dv2 = atomStats.getColumn(i);
+                    uint64_t ndv1 = dv1.size();
+                    uint64_t ndv2 = dv2.size();
+                    f *= max(ndv1, ndv2);
+                    stats.setColumn(arg, ndv1 <= ndv2 ? dv1 : dv2);
+                } else {
+                    state.bind(arg, 1);
+                    stats.setColumn(arg, atomStats.getColumn(i));
+                }
+            }
+        }
+
+        // compute number of nested iterations
+        // uint64_t numIterations = f >= 1 ? state.getInnermostIterations() * atomStats.getCardinality() / f : 1;
+        uint64_t numIterations = f >= 1 ? atomStats.getCardinality() / f : 1;
+        if (numIterations <= 0) {
+            numIterations = 1;
+        }
+
+        // compute full computation costs per iteration
+        // Cost costPerCall = f > 1 ? log(atom.getCardinality()) : 1;
+        Cost costPerCall = 1;
+
+        // add to cost
+        state.incCost(numIterations * costPerCall);
+
+        // increment nested iterators
+        // state.setInnermostIterations(numIterations);
+        state.setInnermostIterations(state.getInnermostIterations() * numIterations);
+
+        // that's it
+        return state;
+    }
+};
+
+// ----------------------------------------------------------------------
 //                          Log Cost Model
 // ----------------------------------------------------------------------
 
@@ -743,7 +850,7 @@ struct LogCostModel : public cost_model<SimpleComputationalCostAtom, BindingStat
         return res;
     }
 
-    BindingState applyTo(const BindingState& state, const SimpleComputationalCostAtom& atom) const override {
+    BindingState applyTo(BindingState& state, const SimpleComputationalCostAtom& atom) const override {
         BindingState res = state;
 
         // compute the costs of this step

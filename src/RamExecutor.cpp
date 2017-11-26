@@ -986,7 +986,7 @@ Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostringstream
     };
 
     // fix scheduling strategy
-    typedef Problem<SimpleComputationalCostModel> Problem;
+    typedef Problem<FifoCostModel> Problem;
     typedef typename Problem::atom_type Atom;
 
     // create an optimization problem
@@ -1012,7 +1012,7 @@ Order scheduleByModel(AstClause& clause, RamEnvironment& env, std::ostringstream
         // add new atom
         RamTranslator translator;
         p.addAtom(
-                Atom(i, args, env.getRelation(translator.translateRelationName(atoms[i]->getName())).size()));
+                Atom(i, args, env.getRelation(translator.translateRelationName(atoms[i]->getName())).getRelationStats()));
     }
 
     // solve the optimization problem

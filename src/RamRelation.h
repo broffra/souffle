@@ -21,9 +21,11 @@
 
 #pragma once
 
+#include "Global.h"
 #include "IODirectives.h"
 #include "ParallelUtils.h"
 #include "RamIndex.h"
+#include "RamRelationStats.h"
 #include "RamTypes.h"
 #include "SymbolMask.h"
 #include "SymbolTable.h"
@@ -203,6 +205,9 @@ class RamRelation {
     /** The name / arity of this relation */
     RamRelationIdentifier id;
 
+    /** The distinct value statistics of this relation */
+    DistinctValueStats stats;
+
     size_t num_tuples;
 
     std::unique_ptr<Block> head;
@@ -220,14 +225,14 @@ class RamRelation {
 
 public:
     RamRelation(const RamRelationIdentifier& id)
-            : id(id), num_tuples(0), head(std::unique_ptr<Block>(new Block())), tail(head.get()),
-              totalIndex(nullptr) {}
+            : id(id), stats(id.getArity()), num_tuples(0),
+              head(std::unique_ptr<Block>(new Block())), tail(head.get()), totalIndex(nullptr) {}
 
     RamRelation(const RamRelation& other) = delete;
 
     RamRelation(RamRelation&& other)
-            : id(std::move(other.id)), num_tuples(other.num_tuples), tail(other.tail),
-              totalIndex(other.totalIndex) {
+            : id(std::move(other.id)), stats(std::move(other.stats)),
+              num_tuples(other.num_tuples), tail(other.tail), totalIndex(other.totalIndex) {
         // take over ownership
         head.swap(other.head);
         indices.swap(other.indices);
@@ -245,6 +250,7 @@ public:
         ASSERT(getArity() == other.getArity());
 
         id = other.id;
+        stats = other.stats;
         num_tuples = other.num_tuples;
         tail = other.tail;
         totalIndex = other.totalIndex;
@@ -269,6 +275,11 @@ public:
     /** get arity of relation */
     size_t getArity() const {
         return id.getArity();
+    }
+
+    /** get distinct value statistics */
+    const DistinctValueStats& getRelationStats() const {
+        return stats;
     }
 
     /** determines whether this relation is empty */
@@ -395,6 +406,10 @@ public:
 
         } else {
             quickInsert(tuple);
+        }
+
+        if (Global::config().has("auto-schedule")) {
+            stats.insert(tuple);
         }
     }
 

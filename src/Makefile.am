@@ -115,7 +115,7 @@ souffle_sources = \
               RamProgram.h                              \
               RamRecords.cpp        RamRecords.h        \
               RamRelation.cpp       RamRelation.h       \
-              RamRelationStats.cpp  RamRelationStats.h  \
+              RamRelationStats.h                        \
               RamVisitor.h                              \
               RuleScheduler.h                           \
               SignalHandler.h                           \

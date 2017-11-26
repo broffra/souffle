@@ -17,7 +17,8 @@
 
 #pragma once
 
-#include "RamRelation.h"
+#include "BTree.h"
+#include "RamTypes.h"
 
 #include <limits>
 #include <vector>
@@ -32,7 +33,7 @@ typedef unsigned Column;
  */
 class RamRelationStats {
     /** The arity - accurate */
-    uint8_t arity;
+    size_t arity;
 
     /** The number of tuples - accurate */
     uint64_t size;
@@ -46,6 +47,8 @@ class RamRelationStats {
 public:
     RamRelationStats() : arity(0), size(0), sample_size(0) {}
 
+    RamRelationStats(size_t arity) : arity(arity), size(0), sample_size(0) {}
+
     RamRelationStats(uint64_t size, const std::vector<uint64_t>& cards)
             : arity(cards.size()), size(size), sample_size(0), cardinalities(cards) {}
 
@@ -55,15 +58,7 @@ public:
     RamRelationStats& operator=(const RamRelationStats&) = default;
     RamRelationStats& operator=(RamRelationStats&&) = default;
 
-    /**
-     * A factory function extracting statistical information form the given relation
-     * base on a given sample size. If the sample size is not specified, the full
-     * relation will be processed.
-     */
-    static RamRelationStats extractFrom(
-            const RamRelation& rel, uint32_t sample_size = std::numeric_limits<uint32_t>::max());
-
-    uint8_t getArity() const {
+    size_t getArity() const {
         return arity;
     }
 
@@ -89,6 +84,39 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const RamRelationStats& stats) {
         stats.print(out);
         return out;
+    }
+};
+
+/**
+ * A summary of statistical properties of a ram relation that also maintains counts for
+ * distinct values.
+ */
+class DistinctValueStats : public RamRelationStats {
+    /** write each column in its own set */
+    std::vector<btree_set<RamDomain>> columns;
+
+public:
+    DistinctValueStats(size_t arity) : RamRelationStats(arity), columns(arity) {}
+
+    void insert(const RamDomain* tuple) {
+        for (std::size_t i = 0; i < getArity(); i++) {
+            columns[i].insert(tuple[i]);
+        }
+    }
+
+    const uint64_t getNumDistinct(Column c) const {
+        return columns[c].size();
+    }
+
+    const btree_set<RamDomain>& getColumn(Column c) const {
+        return columns[c];
+    }
+
+    void setColumn(Column c, const btree_set<RamDomain>& column) {
+        if (c >= columns.size()) {
+            columns.resize(c + 1);
+        }
+        columns[c] = column;
     }
 };
 
