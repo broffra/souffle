@@ -88,38 +88,33 @@ public:
     virtual bool exists(const RamDomain* tuple) = 0;
 
     // --- iterator ---
-
-    class AbstractIterator {
+    class AbstractIterator : public std::iterator<std::forward_iterator_tag, RamDomain*> {
     public:
+        virtual ~AbstractIterator()  = default;
         virtual const RamDomain* operator*() = 0;
-
-        virtual bool operator==(const AbstractIterator& other) const  = 0; 
-
+        virtual bool operator==(const AbstractIterator& other) const = 0; 
         virtual bool operator!=(const AbstractIterator& other) const = 0; 
-
         virtual AbstractIterator& operator++() = 0; 
     };
 
     /** Iterator for relation */
-    class iterator {
+    class iterator : public std::iterator<std::forward_iterator_tag, RamDomain*> {
+        AbstractIterator *iter; 
     public:
-        iterator(){ }
- 
+        iterator(): iter(nullptr) { }
+        iterator(AbstractIterator* it) : iter(it) { } 
         const RamDomain* operator*() const {
-          return nullptr;
+            return *(*iter); 
         }
-
         bool operator==(const iterator& other) const { 
-          return false;
+          return *iter == *other.iter;
         }
-
         bool operator!=(const iterator& other) const {
-           return false;
+          return *iter != *other.iter;
         } 
-
         virtual iterator& operator++() {
-              static iterator x;
-              return x;
+          iter = &( ++(*iter)); 
+          return *this; 
         } 
     };
 
@@ -136,7 +131,6 @@ public:
     virtual void extend(const InterpreterRelation &rel) = 0;
 };
 
-#if 0
 /**
  * Interpreter Relation
  */
@@ -195,11 +189,6 @@ public:
         return arity;
     }
 
-    /** Check whether relation is empty */
-    bool empty() const {
-        return num_tuples == 0;
-    }
-
     /** Gets the number of contained tuples */
     size_t size() const {
         return num_tuples;
@@ -241,13 +230,6 @@ public:
 
         // increment relation size
         num_tuples++;
-    }
-
-    /** Insert tuple via arguments */
-    template <typename... Args>
-    void insert(RamDomain first, Args... rest) {
-        RamDomain tuple[] = {first, RamDomain(rest)...};
-        insert(tuple);
     }
 
     /** Merge another relation into this relation */
@@ -361,35 +343,30 @@ public:
 
     // --- iterator ---
 
-    class iterator ::   { 
-        my_iterator it; 
-        // forwarding 
-    }; 
-
     /** Iterator for relation */
-    class my_iterator : public std::iterator<std::forward_iterator_tag, RamDomain*> {
+    class relationIterator : public AbstractIterator {
         Block* cur;
         RamDomain* tuple;
         size_t arity;
 
     public:
-        iterator() : cur(nullptr), tuple(nullptr), arity(0) {}
+        relationIterator() : cur(nullptr), tuple(nullptr), arity(0) {}
 
-        iterator(Block* c, RamDomain* t, size_t a) : cur(c), tuple(t), arity(a) {}
+        relationIterator(Block* c, RamDomain* t, size_t a) : cur(c), tuple(t), arity(a) {}
 
         const RamDomain* operator*() {
             return tuple;
         }
 
-        bool operator==(const iterator& other) const {
+        bool operator==(const relationIterator& other) const {
             return tuple == other.tuple;
         }
 
-        bool operator!=(const iterator& other) const {
+        bool operator!=(const relationIterator& other) const {
             return (tuple != other.tuple);
         }
 
-        iterator& operator++() {
+        relationIterator& operator++() {
             // check for end
             if (!cur) {
                 return *this;
@@ -398,7 +375,7 @@ public:
             // support 0-arity
             if (arity == 0) {
                 // move to end
-                *this = iterator();
+                *this = relationIterator();
                 return *this;
             }
 
@@ -414,9 +391,10 @@ public:
 
     /** get iterator begin of relation */
     inline iterator begin() const {
+
         // check for emptiness
         if (empty()) {
-            return end();
+            return iterator(end());
         }
 
         // support 0-arity
@@ -429,6 +407,7 @@ public:
 
         // support non-empty non-zero arity relation
         return iterator(head.get(), &head->data[0], arity);
+
     }
 
     /** get iterator begin of relation */
@@ -449,6 +428,8 @@ public:
     /** Extend relation */
     virtual void extend(const InterpreterIndexedRelation& rel) {}
 };
+
+#if 0
 
 
 /**
