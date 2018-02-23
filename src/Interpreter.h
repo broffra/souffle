@@ -43,7 +43,7 @@ public:
     virtual size_t getArity() const = 0; 
 
     /** Check whether relation is empty */
-    bool empty() {
+    bool empty() const {
        return size() == 0;
     }
 
@@ -85,7 +85,7 @@ public:
     virtual SearchColumns getTotalIndexKey() const = 0; 
 
     /** check whether a tuple exists in the relation */
-    virtual bool exists(const RamDomain* tuple) = 0;
+    virtual bool exists(const RamDomain* tuple) const = 0;
 
     // --- iterator ---
     class AbstractIterator : public std::iterator<std::forward_iterator_tag, RamDomain*> {
@@ -99,10 +99,11 @@ public:
 
     /** Iterator for relation */
     class iterator : public std::iterator<std::forward_iterator_tag, RamDomain*> {
-        AbstractIterator *iter; 
+        std::shared_ptr<AbstractIterator> iter;
     public:
         iterator(): iter(nullptr) { }
-        iterator(AbstractIterator* it) : iter(it) { } 
+        iterator(std::shared_ptr<AbstractIterator> it) : iter(std::move(it)) { }
+        virtual ~iterator() = default;
         const RamDomain* operator*() const {
             return *(*iter); 
         }
@@ -113,8 +114,11 @@ public:
           return *iter != *other.iter;
         } 
         virtual iterator& operator++() {
-          iter = &( ++(*iter)); 
-          return *this; 
+          AbstractIterator *current_ptr = &(++(*iter));
+          if (iter.get() != current_ptr) {
+              iter.reset(current_ptr);
+          }
+          return *this;
         } 
     };
 
@@ -358,15 +362,23 @@ public:
             return tuple;
         }
 
-        bool operator==(const relationIterator& other) const {
-            return tuple == other.tuple;
+        bool operator==(const AbstractIterator& other) const {
+           try {
+                return tuple == dynamic_cast<const relationIterator&>(other).tuple;
+           } catch (const std::bad_cast& e) {
+                return false;
+           }
         }
 
-        bool operator!=(const relationIterator& other) const {
-            return (tuple != other.tuple);
+        bool operator!=(const AbstractIterator& other) const {
+            try {
+                return tuple != dynamic_cast<const relationIterator&>(other).tuple;
+            } catch (const std::bad_cast& e) {
+                return false;
+            }
         }
 
-        relationIterator& operator++() {
+        AbstractIterator& operator++() {
             // check for end
             if (!cur) {
                 return *this;
@@ -394,7 +406,7 @@ public:
 
         // check for emptiness
         if (empty()) {
-            return iterator(end());
+            return end();
         }
 
         // support 0-arity
@@ -402,12 +414,11 @@ public:
         if (arity == 0) {
             Block dummyBlock;
             RamDomain dummyTuple;
-            return iterator(&dummyBlock, &dummyTuple, 0);
+            return iterator(std::make_shared<relationIterator>(&dummyBlock, &dummyTuple, 0));
         }
 
         // support non-empty non-zero arity relation
-        return iterator(head.get(), &head->data[0], arity);
-
+        return iterator(std::make_shared<relationIterator>(head.get(), &head->data[0], arity));
     }
 
     /** get iterator begin of relation */
@@ -429,13 +440,9 @@ public:
     virtual void extend(const InterpreterIndexedRelation& rel) {}
 };
 
-#if 0
-
-
 /**
  * Interpreter Equivalence Relation
  */
-
 class InterpreterEqRelation : public InterpreterIndexedRelation {
 public:
     InterpreterEqRelation(size_t relArity) : InterpreterIndexedRelation(relArity) {}
@@ -504,8 +511,6 @@ public:
         }
     }
 };
-
-#endif 
 
 /**
  * An environment encapsulates all the context information required for

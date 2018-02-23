@@ -80,7 +80,7 @@ protected:
 
     public:
         iterator_base(uint32_t arg_id, const InterpreterRelInterface* r, InterpreterRelation::iterator i)
-                : Relation::iterator_base(arg_id), ramRelationInterface(r), it(i), tup(r) {}
+                : Relation::iterator_base(arg_id), ramRelationInterface(r), it(std::move(i)), tup(r) {}
         virtual ~iterator_base() {}
 
         /** Increment iterator */
