@@ -89,25 +89,45 @@ public:
 
     // --- iterator ---
 
+    class AbstractIterator {
+    public:
+        virtual const RamDomain* operator*() = 0;
+
+        virtual bool operator==(const AbstractIterator& other) const  = 0; 
+
+        virtual bool operator!=(const AbstractIterator& other) const = 0; 
+
+        virtual AbstractIterator& operator++() = 0; 
+    };
+
     /** Iterator for relation */
     class iterator {
     public:
-        virtual ~iterator() = default;
+        iterator(){ }
+ 
+        const RamDomain* operator*() const {
+          return nullptr;
+        }
 
-        virtual const RamDomain* operator*() = 0;
+        bool operator==(const iterator& other) const { 
+          return false;
+        }
 
-        virtual bool operator==(const iterator& other) const  = 0; 
+        bool operator!=(const iterator& other) const {
+           return false;
+        } 
 
-        virtual bool operator!=(const iterator& other) const = 0; 
-
-        virtual iterator& operator++() = 0; 
+        virtual iterator& operator++() {
+              static iterator x;
+              return x;
+        } 
     };
 
     /** get iterator begin of relation */
-    virtual iterator begin() = 0; 
+    virtual iterator begin() const  = 0; 
 
     /** get iterator begin of relation */
-    virtual iterator end()  = 0; 
+    virtual iterator end() const  = 0; 
 
     /** Extend tuple */
     virtual std::vector<RamDomain*> extend(const RamDomain* tuple) = 0;
@@ -116,6 +136,7 @@ public:
     virtual void extend(const InterpreterRelation &rel) = 0;
 };
 
+#if 0
 /**
  * Interpreter Relation
  */
@@ -168,39 +189,6 @@ public:
     InterpreterIndexedRelation(size_t relArity)
             : arity(relArity), num_tuples(0), head(std::make_unique<Block>()), tail(head.get()),
               totalIndex(nullptr) {}
-
-    InterpreterIndexedRelation(const InterpreterIndexedRelation& other) = delete;
-
-    InterpreterIndexedRelation(InterpreterIndexedRelation&& other)
-            : arity(other.arity), num_tuples(other.num_tuples), tail(other.tail),
-              totalIndex(other.totalIndex) {
-        // take over ownership
-        head.swap(other.head);
-        indices.swap(other.indices);
-
-        allocatedBlocks.swap(other.allocatedBlocks);
-    }
-
-    virtual ~InterpreterIndexedRelation() {
-        for (auto x : allocatedBlocks) delete[] x;
-    }
-
-    // TODO (#421): check whether still required
-    InterpreterIndexedRelation& operator=(const InterpreterIndexedRelation& other) = delete;
-
-    InterpreterIndexedRelation& operator=(InterpreterIndexedRelation&& other) {
-        ASSERT(getArity() == other.getArity());
-
-        num_tuples = other.num_tuples;
-        tail = other.tail;
-        totalIndex = other.totalIndex;
-
-        // take over ownership
-        head.swap(other.head);
-        indices.swap(other.indices);
-
-        return *this;
-    }
 
     /** Get arity of relation */
     size_t getArity() const {
@@ -462,6 +450,7 @@ public:
     virtual void extend(const InterpreterIndexedRelation& rel) {}
 };
 
+
 /**
  * Interpreter Equivalence Relation
  */
@@ -535,13 +524,15 @@ public:
     }
 };
 
+#endif 
+
 /**
  * An environment encapsulates all the context information required for
  * processing a RAM program.
  */
 class InterpreterEnvironment {
     /** The type utilized for storing relations */
-    typedef std::map<std::string, InterpreterIndexedRelation*> relation_map;
+    typedef std::map<std::string, InterpreterRelation*> relation_map;
 
     /** The symbol table to be utilized by an evaluation */
     SymbolTable& symbolTable;
@@ -588,17 +579,19 @@ public:
      * by this environment. If the addressed relation does not exist,
      * a new, empty relation will be created.
      */
-    InterpreterIndexedRelation& getRelation(const RamRelation& id) {
-        InterpreterIndexedRelation* res = nullptr;
+    InterpreterRelation& getRelation(const RamRelation& id) {
+        InterpreterRelation* res = nullptr;
         auto pos = data.find(id.getName());
         if (pos != data.end()) {
             res = (pos->second);
         } else {
+#if 0
             if (!id.isEqRel()) {
                 res = new InterpreterIndexedRelation(id.getArity());
             } else {
                 res = new InterpreterEqRelation(id.getArity());
             }
+#endif
             data[id.getName()] = res;
         }
         // return result
@@ -611,7 +604,7 @@ public:
      * to an empty relation will be returned (not exhibiting the proper
      * id, but the correct content).
      */
-    const InterpreterIndexedRelation& getRelation(const RamRelation& id) const {
+    const InterpreterRelation& getRelation(const RamRelation& id) const {
         // look up relation
         auto pos = data.find(id.getName());
         assert(pos != data.end());
@@ -626,7 +619,7 @@ public:
      * to an empty relation will be returned (not exhibiting the proper
      * id, but the correct content).
      */
-    const InterpreterIndexedRelation& getRelation(const std::string& name) const {
+    const InterpreterRelation& getRelation(const std::string& name) const {
         auto pos = data.find(name);
         assert(pos != data.end());
         return *pos->second;
@@ -760,7 +753,7 @@ public:
      * relation will be processed.
      */
     static RelationStats extractFrom(
-            const InterpreterIndexedRelation& rel, uint32_t sample_size = std::numeric_limits<uint32_t>::max());
+            const InterpreterRelation& rel, uint32_t sample_size = std::numeric_limits<uint32_t>::max());
 
     uint8_t getArity() const {
         return arity;
