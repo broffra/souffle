@@ -339,7 +339,7 @@ endif()
 # --------------------------------------------------
 # CPack configuration
 # --------------------------------------------------
-execute_process(COMMAND bash "sh/check_os.sh"
+execute_process(COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/sh/check_os.sh"
                 RESULT_VARIABLE CHECK_OS_RESULT
                 OUTPUT_VARIABLE CHECK_OS_OUTPUT)
 
