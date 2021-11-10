@@ -8,6 +8,7 @@ include(SouffleTests)
 
 souffle_add_binary_test(binary_relation_test src SOUFFLE_HEADERS_ONLY)
 souffle_add_binary_test(brie_test src SOUFFLE_HEADERS_ONLY)
+souffle_add_binary_test(btree_delete_test src SOUFFLE_HEADERS_ONLY)
 souffle_add_binary_test(btree_multiset_test src SOUFFLE_HEADERS_ONLY)
 souffle_add_binary_test(btree_set_test src SOUFFLE_HEADERS_ONLY)
 souffle_add_binary_test(compiled_tuple_test src SOUFFLE_HEADERS_ONLY)
