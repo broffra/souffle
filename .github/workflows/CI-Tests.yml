@@ -6,7 +6,7 @@ on:
 
 jobs:
   Code-Style:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: checkout
@@ -18,20 +18,21 @@ jobs:
       run: sh/run_test_format.sh
 
   Ubuntu-CMake:
-    needs: Code-Style
     timeout-minutes: 150
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         domain: [32bit, 64bit, 64bit-noomp]
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
     - name: checkout
       uses: actions/checkout@v2
+
+    - name: set-env
+      run: echo "JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)" >> $GITHUB_ENV
 
     - name: install-deps
       run: sudo sh/setup/install_ubuntu_deps.sh
@@ -48,17 +49,19 @@ jobs:
       if: ${{ matrix.domain == '64bit-noomp' }}
       run: cmake -S . -B build -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
 
+    - name: echo
+      run: echo "Runner is using ${JOBS} jobs"
+
     - name: make
-      run: cmake --build build -j6
+      run: cmake --build build -j${JOBS}
 
     - name: check-interpreter
-      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j
+      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j${JOBS}
       
     - name: check-others
-      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j
+      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j${JOBS}
 
   OSX-CMake:
-    needs: Code-Style
     timeout-minutes: 150
 
     runs-on: macos-latest
@@ -67,23 +70,28 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
 
+    - name: set-env
+      run: echo "JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)" >> $GITHUB_ENV
+
     - name: install-deps
       run: sh/setup/install_macos_deps.sh
 
     - name: setup-32bit-domain
       run: cmake -S . -B build
 
+    - name: echo
+      run: echo "Runner is using ${JOBS} jobs"
+
     - name: make
-      run: cmake --build build -j6
+      run: cmake --build build -j${JOBS}
 
     - name: check-interpreter
-      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j
-      
+      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j${JOBS}
+
     - name: check-others
-      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j
+      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j${JOBS}
           
   Memory-Check:
-    needs: Code-Style
     timeout-minutes: 150
 
     runs-on: ubuntu-latest
@@ -92,21 +100,25 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
 
+    - name: set-env
+      run: echo "JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)" >> $GITHUB_ENV
+
     - name: install-deps
       run: sudo sh/setup/install_ubuntu_deps.sh
+
+    - name: echo
+      run: echo "Runner is using ${JOBS} jobs"
 
     - name: setup-with-memory-sanitizer
       run: cmake -S . -B build -DSOUFFLE_SANITISE_MEMORY=ON -DSOUFFLE_TEST_EVALUATION=OFF
 
     - name: make
-      run: cmake --build build -j6
+      run: cmake --build build -j${JOBS}
 
     - name: check
-      run: cd build && ctest --output-on-failure --progress -j
-
+      run: cd build && ctest --output-on-failure --progress -j${JOBS}
 
   Code-Coverage:
-    needs: [Code-Style, Ubuntu-CMake, OSX-CMake, Memory-Check]
     timeout-minutes: 150
 
     runs-on: ubuntu-latest
@@ -117,6 +129,9 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: set-env
+      run: echo "JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)" >> $GITHUB_ENV
+
     - name: install-lcov
       run: sudo apt-get update && sudo apt-get install lcov
 
@@ -126,11 +141,14 @@ jobs:
     - name: setup-with-code-coverage-on
       run: cmake -DSOUFFLE_CODE_COVERAGE=ON -S . -B ./build
 
+    - name: echo
+      run: echo "Runner is using ${JOBS} jobs"
+
     - name: make
-      run: cmake --build build -j6
+      run: cmake --build build -j${JOBS}
 
     - name: check
-      run: cd build && ctest --output-on-failure --progress -j6
+      run: cd build && ctest --output-on-failure --progress -j${JOBS}
 
     - name: create-coverage-report
       run: lcov --capture --directory . --output-file coverage.info
