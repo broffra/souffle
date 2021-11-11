@@ -6,7 +6,7 @@ on:
 
 jobs:
   Code-Style:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: checkout
@@ -18,7 +18,6 @@ jobs:
       run: sh/run_test_format.sh
 
   Ubuntu-CMake:
-    needs: Code-Style
     timeout-minutes: 150
 
     strategy:
@@ -32,6 +31,12 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v2
+
+    - name: setup-env
+      run: |
+        JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
+        echo "JOBS=${JOBS}" >> $GITHUB_ENV
+        echo "Test runner will use ${JOBS} jobs."
 
     - name: install-deps
       run: sudo sh/setup/install_ubuntu_deps.sh
@@ -49,16 +54,15 @@ jobs:
       run: cmake -S . -B build -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
 
     - name: make
-      run: cmake --build build -j6
+      run: cmake --build build -j${JOBS}
 
     - name: check-interpreter
-      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j
+      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j${JOBS}
       
     - name: check-others
-      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j
+      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j${JOBS}
 
   OSX-CMake:
-    needs: Code-Style
     timeout-minutes: 150
 
     runs-on: macos-latest
@@ -67,6 +71,12 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
 
+    - name: setup-env
+      run: |
+        JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
+        echo "JOBS=${JOBS}" >> $GITHUB_ENV
+        echo "Test runner will use ${JOBS} jobs."
+
     - name: install-deps
       run: sh/setup/install_macos_deps.sh
 
@@ -74,16 +84,15 @@ jobs:
       run: cmake -S . -B build
 
     - name: make
-      run: cmake --build build -j6
+      run: cmake --build build -j${JOBS}
 
     - name: check-interpreter
-      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j
-      
+      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j${JOBS}
+
     - name: check-others
-      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j
+      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j${JOBS}
           
   Memory-Check:
-    needs: Code-Style
     timeout-minutes: 150
 
     runs-on: ubuntu-latest
@@ -92,6 +101,12 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
 
+    - name: setup-env
+      run: |
+        JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
+        echo "JOBS=${JOBS}" >> $GITHUB_ENV
+        echo "Test runner will use ${JOBS} jobs."
+
     - name: install-deps
       run: sudo sh/setup/install_ubuntu_deps.sh
 
@@ -99,14 +114,12 @@ jobs:
       run: cmake -S . -B build -DSOUFFLE_SANITISE_MEMORY=ON -DSOUFFLE_TEST_EVALUATION=OFF
 
     - name: make
-      run: cmake --build build -j6
+      run: cmake --build build -j${JOBS}
 
     - name: check
-      run: cd build && ctest --output-on-failure --progress -j
-
+      run: cd build && ctest --output-on-failure --progress -j${JOBS}
 
   Code-Coverage:
-    needs: [Code-Style, Ubuntu-CMake, OSX-CMake, Memory-Check]
     timeout-minutes: 150
 
     runs-on: ubuntu-latest
@@ -116,6 +129,12 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+
+    - name: setup-env
+      run: |
+        JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
+        echo "JOBS=${JOBS}" >> $GITHUB_ENV
+        echo "Test runner will use ${JOBS} jobs."
 
     - name: install-lcov
       run: sudo apt-get update && sudo apt-get install lcov
@@ -127,10 +146,10 @@ jobs:
       run: cmake -DSOUFFLE_CODE_COVERAGE=ON -S . -B ./build
 
     - name: make
-      run: cmake --build build -j6
+      run: cmake --build build -j${JOBS}
 
     - name: check
-      run: cd build && ctest --output-on-failure --progress -j6
+      run: cd build && ctest --output-on-failure --progress -j${JOBS}
 
     - name: create-coverage-report
       run: lcov --capture --directory . --output-file coverage.info
