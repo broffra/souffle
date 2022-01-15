@@ -128,10 +128,12 @@ namespace souffle::interpreter {
 #define FFI_RamSigned ffi_type_sint64
 #define FFI_RamUnsigned ffi_type_uint64
 #define FFI_RamFloat ffi_type_double
+#define BINARY_OP_EXP_TyTemp RamUnsigned
 #else
 #define FFI_RamSigned ffi_type_sint32
 #define FFI_RamUnsigned ffi_type_uint32
 #define FFI_RamFloat ffi_type_float
+#define BINARY_OP_EXP_TyTemp uint64_t
 #endif
 
 #define FFI_Symbol ffi_type_pointer
@@ -551,14 +553,16 @@ RamDomain Engine::execute(const Node* node, Context& ctxt) {
                     // clang-format on
 
                 case FunctorOp::EXP: {
-                    return std::pow(execute(shadow.getChild(0), ctxt), execute(shadow.getChild(1), ctxt));
+                    return ramBitCast(static_cast<RamSigned>(static_cast<BINARY_OP_EXP_TyTemp>(
+                            std::pow(execute(shadow.getChild(0), ctxt), execute(shadow.getChild(1), ctxt)))));
                 }
 
                 case FunctorOp::UEXP: {
                     auto first = ramBitCast<RamUnsigned>(execute(shadow.getChild(0), ctxt));
                     auto second = ramBitCast<RamUnsigned>(execute(shadow.getChild(1), ctxt));
                     // Extra casting required: pow returns a floating point.
-                    return ramBitCast(static_cast<RamUnsigned>(std::pow(first, second)));
+                    return ramBitCast(static_cast<RamUnsigned>(
+                            static_cast<BINARY_OP_EXP_TyTemp>(std::pow(first, second))));
                 }
 
                 case FunctorOp::FEXP: {
