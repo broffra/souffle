@@ -89,6 +89,7 @@ jobs:
     - name: ctest
       run: |
         CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 4 ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
+        echo "Running tests ${CHUNKS}."
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
 
     - name: create-coverage-report
@@ -141,6 +142,7 @@ jobs:
     - name: ctest
       run: |
         CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 5 ${{ matrix.chunk }}" | python3 -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
+        echo "Running tests ${CHUNKS}"
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
           
   Memory-Check:
@@ -178,6 +180,7 @@ jobs:
     - name: ctest
       run: |
         CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 4 ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
+        echo "Running tests ${CHUNKS}"
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
 
   Code-Coverage:
@@ -209,23 +212,8 @@ jobs:
     - name: install-lcov
       run: sudo apt-get update && sudo apt-get install lcov
 
-    - name: install-deps
-      run: sudo sh/setup/install_ubuntu_deps.sh
-
-    - name: setup-with-code-coverage-on
-      run: cmake -DSOUFFLE_CODE_COVERAGE=ON -S . -B ./build
-
-    - name: make
-      run: cmake --build build -j${JOBS}
-
-    - name: check
-      run: cd build && ctest --output-on-failure --progress -j${JOBS}
-
-    - name: create-coverage-report
-      run: lcov --capture --directory . --output-file coverage.info
-
-    - name: remove-system-files-from-coverage-report
-      run: lcov --remove coverage.info '/usr/*' --output-file coverage.info
+    - name: merge-coverage-report
+      run: lcov $(for i in coverage-*-*/coverage.info; do echo -a $i; done) --output-file coverage.info
 
     - name: upload-coverage-report
       uses: codecov/codecov-action@v2
