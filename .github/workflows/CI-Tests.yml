@@ -32,6 +32,8 @@ jobs:
     needs: TestSetup
     timeout-minutes: 150
 
+    name: Ubuntu-CMake-${{ matrix.domain }} (chunk ${{ matrix.chunk }})
+
     strategy:
       fail-fast: false
       matrix:
@@ -72,7 +74,7 @@ jobs:
     - name: ctest
       run: |
         CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 4 ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
-        ctest --test-dir build -I "${{ matrix.chunk }}" --output-on-failure --progress -j${JOBS}
+        ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
 
   OSX-CMake:
     timeout-minutes: 150
