@@ -40,6 +40,7 @@ jobs:
           echo "Test chunks: ${CHUNKS}."
 
   Ubuntu-CMake:
+    needs: TestSetup
     timeout-minutes: 150
 
     name: Ubuntu-CMake-${{ matrix.domain }} (chunk ${{ matrix.chunk }})
@@ -87,6 +88,7 @@ jobs:
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
 
   OSX-CMake:
+    needs: OSXSetup
     timeout-minutes: 150
 
     name: OSX-CMake (chunk ${{ matrix.chunk }})
@@ -123,6 +125,7 @@ jobs:
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
           
   Memory-Check:
+    needs: TestSetup
     timeout-minutes: 150
 
     name: Memory-Check (chunk ${{ matrix.chunk }})
