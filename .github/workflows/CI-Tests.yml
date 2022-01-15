@@ -20,7 +20,7 @@ jobs:
   TestSetup:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-test-ids.outputs.matrix }}
+      matrix: ${{ steps.set-test-ids.outputs.chunks }}
     steps:
       - id: set-test-ids
         run: |
