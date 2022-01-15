@@ -17,14 +17,28 @@ jobs:
     - name: clang-format
       run: sh/run_test_format.sh
 
+  TestSetup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-test-chunks.outputs.matrix }}
+    steps:
+      - id: set-test-chunks
+        run: |
+          CHUNKS=$(echo "$(ctest --show-only=json-v1 | jq '.tests | length') 4" | python -c 'import json, sys; n_tests, n_chunks = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(json.dumps([f"{i * d + min(m, i) + 1},{(i+1) * d + min(m, i+1)}" for i in range(n_chunks)]))')
+          run: echo "::set-output name=chunks::${CHUNKS}"
+          echo "Test chunks: ${CHUNKS}."
+
   Ubuntu-CMake:
     timeout-minutes: 150
+
+    name: Ubuntu-CMake (${{ matrix.chunk }})
 
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
         domain: [32bit, 64bit, 64bit-noomp]
+	chunk: ${{fromJSON(needs.TestSetup.outputs.chunks)}}
 
     runs-on: ${{ matrix.os }}
 
@@ -56,11 +70,8 @@ jobs:
     - name: make
       run: cmake --build build -j${JOBS}
 
-    - name: check-interpreter
-      run: cd build && ctest -L "interpreted" --output-on-failure --progress -j${JOBS}
-      
-    - name: check-others
-      run: cd build && ctest -LE "interpreted" --output-on-failure --progress -j${JOBS}
+    - name: ctest
+      run: cd build && ctest -I "${{ matrix.chunk }}" --output-on-failure --progress -j${JOBS}
 
   OSX-CMake:
     timeout-minutes: 150
