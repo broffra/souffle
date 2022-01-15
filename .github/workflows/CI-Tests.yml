@@ -38,7 +38,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         domain: [32bit, 64bit, 64bit-noomp]
-	chunk: ${{fromJSON(needs.TestSetup.outputs.chunks)}}
+        chunk: ${{fromJSON(needs.TestSetup.outputs.chunks)}}
 
     runs-on: ${{ matrix.os }}
 
