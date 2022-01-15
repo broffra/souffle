@@ -32,8 +32,6 @@ jobs:
     needs: TestSetup
     timeout-minutes: 150
 
-    name: Ubuntu-CMake (${{ matrix.chunk }})
-
     strategy:
       fail-fast: false
       matrix:
