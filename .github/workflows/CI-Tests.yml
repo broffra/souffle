@@ -88,7 +88,7 @@ jobs:
 
     - name: ctest
       run: |
-        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 4 ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
+        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 10 ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
         echo "Running tests ${CHUNKS}."
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
 
@@ -179,7 +179,7 @@ jobs:
 
     - name: ctest
       run: |
-        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 4 ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
+        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 10 ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
         echo "Running tests ${CHUNKS}"
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
 
