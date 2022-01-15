@@ -24,7 +24,10 @@ jobs:
     steps:
       - id: set-test-ids
         run: |
-          CHUNKS=$(python -c 'import json; print(json.dumps(list(range(4))))')
+          CHUNKS=$(python -c '
+import json
+print(json.dumps(list(range(4))))
+          ')
           echo "::set-output name=chunks::${CHUNKS}"
           echo "Test chunks: ${CHUNKS}."
 
@@ -65,6 +68,7 @@ jobs:
         echo "Test runner will use ${JOBS} jobs."
 
     - name: install-lcov
+      if: ${{ matrix.domain == '32bit' }}
       run: sudo apt-get update && sudo apt-get install lcov
 
     - name: install-deps
@@ -72,7 +76,7 @@ jobs:
 
     - name: setup-32bit-domain
       if: ${{ matrix.domain == '32bit' }}
-      run: cmake -S . -B build
+      run: cmake -S . -B build -DSOUFFLE_CODE_COVERAGE=ON
 
     - name: setup-64bit-domain
       if: ${{ matrix.domain == '64bit' }}
@@ -91,12 +95,15 @@ jobs:
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
 
     - name: create-coverage-report
+      if: ${{ matrix.domain == '32bit' }}
       run: lcov --capture --directory build --output-file coverage.info
 
     - name: remove-system-files-from-coverage-report
+      if: ${{ matrix.domain == '32bit' }}
       run: lcov --remove coverage.info '/usr/*' --output-file coverage.info
 
     - name: upload-coverage-artifact
+      if: ${{ matrix.domain == '32bit' }}
       uses: actions/upload-artifact@v2
       with:
         name: coverage-${{ matrix.domain }}-${{ matrix.chunk }}
