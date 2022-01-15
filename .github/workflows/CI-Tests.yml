@@ -20,11 +20,11 @@ jobs:
   TestSetup:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-test-chunks.outputs.matrix }}
+      matrix: ${{ steps.set-test-ids.outputs.matrix }}
     steps:
-      - id: set-test-chunks
+      - id: set-test-ids
         run: |
-          CHUNKS=$(echo "$(ctest --show-only=json-v1 | jq '.tests | length') 4" | python -c 'import json, sys; n_tests, n_chunks = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(json.dumps([f"{i * d + min(m, i) + 1},{(i+1) * d + min(m, i+1)}" for i in range(n_chunks)]))')
+          CHUNKS=$(python -c 'import json; print(json.dumps(list(range(4))))')
           run: echo "::set-output name=chunks::${CHUNKS}"
           echo "Test chunks: ${CHUNKS}."
 
@@ -71,7 +71,9 @@ jobs:
       run: cmake --build build -j${JOBS}
 
     - name: ctest
-      run: cd build && ctest -I "${{ matrix.chunk }}" --output-on-failure --progress -j${JOBS}
+      run: |
+        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(json.dumps([f"{i * d + min(m, i) + 1},{(i+1) * d + min(m, i+1)}" for i in range(n_chunks)]))')
+        ctest --test-dir build -I "${{ matrix.chunk }}" --output-on-failure --progress -j${JOBS}
 
   OSX-CMake:
     timeout-minutes: 150
