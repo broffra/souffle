@@ -25,7 +25,7 @@ jobs:
       - id: set-test-ids
         run: |
           CHUNKS=$(python -c 'import json; print(json.dumps(list(range(4))))')
-          run: echo "::set-output name=chunks::${CHUNKS}"
+          echo "::set-output name=chunks::${CHUNKS}"
           echo "Test chunks: ${CHUNKS}."
 
   Ubuntu-CMake:
