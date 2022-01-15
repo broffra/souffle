@@ -24,7 +24,7 @@ jobs:
     steps:
       - id: set-test-ids
         run: |
-          CHUNKS=$(python -c 'import json; print(json.dumps(list(range(4))))')
+          CHUNKS=$(python -c 'import json; print(json.dumps(list(range(10))))')
           echo "::set-output name=chunks::${CHUNKS}"
           echo "Test chunks: ${CHUNKS}."
 
