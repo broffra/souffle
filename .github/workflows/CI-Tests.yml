@@ -23,7 +23,7 @@ jobs:
       chunks: ${{ steps.set-test-ids.outputs.chunks }}
     steps:
       - id: set-test-ids
-        uses: actions/set-test-ids@v1
+        uses: ./.github/actions/set-test-ids
         with:
           n-chunks: 5
 
