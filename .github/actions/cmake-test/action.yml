@@ -36,7 +36,7 @@ runs:
 
     - name: ctest
       run: |
-        CHUNKs=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') ${{ inputs.n-chunks }} ${{ inputs.chunk }}" | sh/chunkify.py)
+        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') ${{ inputs.n-chunks }} ${{ inputs.chunk }}" | )
         echo "Running tests ${CHUNKS}."
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
       shell: bash
