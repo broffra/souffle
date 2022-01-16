@@ -155,7 +155,6 @@ jobs:
       run: sudo sh/setup/install_ubuntu_deps.sh
 
     - name: cmake-test-32bit
-      if: ${{ matrix.domain == '32bit' }}
       uses: ./.github/actions/cmake-test
       with:
         os: ${{ matrix.os }}
