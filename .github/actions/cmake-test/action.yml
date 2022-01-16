@@ -23,6 +23,7 @@ runs:
       run: |
         echo "List of artifacts:"
         ls -la
+      shell: bash
 
     - name: setup-env
       run: |
