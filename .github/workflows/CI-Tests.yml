@@ -143,6 +143,7 @@ jobs:
       with:
         os: ${{ matrix.os }}
         cmake-flags: ''
+        n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
 
   Memory-Check:
@@ -170,6 +171,7 @@ jobs:
       with:
         os: ${{ matrix.os }}
         cmake-flags: -DSOUFFLE_SANITISE_MEMORY=ON -DSOUFFLE_TEST_EVALUATION=OFF
+        n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
 
   Code-Coverage:
