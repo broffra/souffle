@@ -33,22 +33,6 @@ jobs:
         with:
           n-chunks: ${{ matrix.n-chunks }}
 
-  OSX-Setup:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        n-chunks: [5]
-    outputs:
-      n-chunks: ${{ matrix.n-chunks }}
-      chunks: ${{ steps.set-test-ids.outputs.chunks }}
-    steps:
-      - name: checkout
-        uses: actions/checkout@v2
-      - id: set-test-ids
-        uses: ./.github/actions/set-test-ids
-        with:
-          n-chunks: ${{ matrix.n-chunks }}
-
   Ubuntu-CMake:
     needs: Test-Setup
     timeout-minutes: 150
@@ -60,7 +44,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         domain: [32bit, 64bit, 64bit-noomp]
-        chunk: ${{fromJSON(needs.Test-Setup.outputs.chunks)}}
+        chunk: ${{ fromJSON(needs.Test-Setup.outputs.chunks) }}
 
     runs-on: ${{ matrix.os }}
 
@@ -79,7 +63,6 @@ jobs:
       if: ${{ matrix.domain == '32bit' }}
       uses: ./.github/actions/cmake-test
       with:
-        os: ${{ matrix.os }}
         cmake-flags: -DSOUFFLE_CODE_COVERAGE=ON
         n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
@@ -88,7 +71,6 @@ jobs:
       if: ${{ matrix.domain == '64bit' }}
       uses: ./.github/actions/cmake-test
       with:
-        os: ${{ matrix.os }}
         cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON
         n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
@@ -97,7 +79,6 @@ jobs:
       if: ${{ matrix.domain == '64bit-noomp' }}
       uses: ./.github/actions/cmake-test
       with:
-        os: ${{ matrix.os }}
         cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
         n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
@@ -118,7 +99,7 @@ jobs:
         path: coverage.info
 
   OSX-CMake:
-    needs: OSX-Setup
+    needs: Test-Setup
     timeout-minutes: 150
 
     name: OSX-CMake (chunk ${{ matrix.chunk }})
@@ -127,7 +108,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest]
-        chunk: ${{fromJSON(needs.OSX-Setup.outputs.chunks)}}
+        chunk: ${{ fromJSON(needs.Test-Setup.outputs.chunks) }}
 
     runs-on: ${{ matrix.os }}
 
@@ -141,9 +122,8 @@ jobs:
     - name: cmake-test-32bit
       uses: ./.github/actions/cmake-test
       with:
-        os: ${{ matrix.os }}
         cmake-flags: ''
-        n-chunks: ${{ needs.OSX-Setup.outputs.n-chunks }}
+        n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
 
   Memory-Check:
@@ -155,7 +135,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        chunk: ${{fromJSON(needs.Test-Setup.outputs.chunks)}}
+        chunk: ${{ fromJSON(needs.Test-Setup.outputs.chunks) }}
 
     runs-on: ubuntu-latest
 
@@ -169,7 +149,6 @@ jobs:
     - name: cmake-test-32bit
       uses: ./.github/actions/cmake-test
       with:
-        os: ${{ matrix.os }}
         cmake-flags: -DSOUFFLE_SANITISE_MEMORY=ON -DSOUFFLE_TEST_EVALUATION=OFF
         n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}

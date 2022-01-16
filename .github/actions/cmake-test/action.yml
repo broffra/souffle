@@ -1,17 +1,14 @@
 name: 'cmake-test'
-description: 'CMake and CTest'
+description: 'CMake and CTest reusable component'
 inputs:
-  os:
-    description: 'OS'
-    required: true
   cmake-flags:
-    description: 'CMake flags depending on domain'
-    required: true
-  chunk:
-    chunk: 'Chunk ID'
+    description: 'CMake flags to add to build options'
     required: true
   n-chunks:
-    chunk: 'Total number of chunks'
+    chunk: 'Total number of test chunks'
+    required: true
+  chunk:
+    chunk: 'Chunk index to test'
     required: true
 runs:
   using: "composite"
@@ -23,7 +20,7 @@ runs:
       run: |
         JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
         echo "JOBS=${JOBS}" >> $GITHUB_ENV
-        echo "Test runner will use ${JOBS} jobs."
+        echo "[Debug] Test runner will use ${JOBS} jobs."
       shell: bash
 
     - name: setup-domain
@@ -36,7 +33,10 @@ runs:
 
     - name: ctest
       run: |
-        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') ${{ inputs.n-chunks }} ${{ inputs.chunk }}" | sh/chunkify.py)
-        echo "Running tests ${CHUNKS}."
-        ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
+        TESTS_TO_RUN=$(
+        echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') ${{ inputs.n-chunks }} ${{ inputs.chunk }}" |
+        sh/chunkify.py
+        )
+        echo "[Debug] Running tests in range ${TESTS_TO_RUN}."
+        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress -j${JOBS}
       shell: bash
