@@ -12,7 +12,7 @@ runs:
   steps:
     - id: set-test-ids
       run: |
-        CHUNKS=$(python -c "import json; print(json.dumps(list(range(${{ inputs.n-chunks }}))))")
+        CHUNKS=$(python3 -c "import json; print(json.dumps(list(range(${{ inputs.n-chunks }}))))")
         echo "::set-output name=chunks::${CHUNKS}"
         echo "Test chunks: ${CHUNKS}."
       shell: bash
