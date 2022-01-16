@@ -21,8 +21,10 @@ runs:
 
     - name: check-artifacts
       run: |
-        echo "List of artifacts:"
+        echo "Current dir:"
         ls -la
+        echo "GitHub dir:"
+        ls -la .github/actions/cmake-ctest
       shell: bash
 
     - name: setup-env
