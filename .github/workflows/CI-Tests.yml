@@ -19,8 +19,11 @@ jobs:
 
   Test-Setup:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        n-chunks: [5]
     outputs:
-      n-chunks: 5
+      n-chunks: ${{ matrix.n-chunks }}
       chunks: ${{ steps.set-test-ids.outputs.chunks }}
     steps:
       - name: checkout
@@ -28,12 +31,15 @@ jobs:
       - id: set-test-ids
         uses: ./.github/actions/set-test-ids
         with:
-          n-chunks: ${{ outputs.n-chunks }}
+          n-chunks: ${{ matrix.n-chunks }}
 
   OSX-Setup:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        n-chunks: [5]
     outputs:
-      n-chunks: 5
+      n-chunks: ${{ matrix.n-chunks }}
       chunks: ${{ steps.set-test-ids.outputs.chunks }}
     steps:
       - name: checkout
@@ -41,7 +47,7 @@ jobs:
       - id: set-test-ids
         uses: ./.github/actions/set-test-ids
         with:
-          n-chunks: ${{ outputs.n-chunks }}
+          n-chunks: ${{ matrix.n-chunks }}
 
   Ubuntu-CMake:
     needs: Test-Setup
