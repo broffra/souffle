@@ -21,15 +21,19 @@ runs:
         JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
         echo "JOBS=${JOBS}" >> $GITHUB_ENV
         echo "Test runner will use ${JOBS} jobs."
+      shell: bash
 
     - name: setup-domain
       run: cmake -S . -B build ${{ inputs.cmake-flags }}
+      shell: bash
 
     - name: make
       run: cmake --build build -j${JOBS}
+      shell: bash
 
     - name: ctest
       run: |
         CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 5 ${{ inputs.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
         echo "Running tests ${CHUNKS}."
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
+      shell: bash
