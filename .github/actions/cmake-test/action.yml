@@ -19,6 +19,11 @@ runs:
     - name: checkout
       uses: actions/checkout@v2
 
+    - name: check-artifacts
+      run: |
+        echo "List of artifacts:"
+        ls -la
+
     - name: setup-env
       run: |
         JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
