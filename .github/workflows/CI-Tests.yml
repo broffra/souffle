@@ -20,6 +20,7 @@ jobs:
   Test-Setup:
     runs-on: ubuntu-latest
     outputs:
+      n-chunks: 5
       chunks: ${{ steps.set-test-ids.outputs.chunks }}
     steps:
       - name: checkout
@@ -27,11 +28,12 @@ jobs:
       - id: set-test-ids
         uses: ./.github/actions/set-test-ids
         with:
-          n-chunks: 5
+          n-chunks: ${{ outputs.n-chunks }}
 
   OSX-Setup:
     runs-on: ubuntu-latest
     outputs:
+      n-chunks: 5
       chunks: ${{ steps.set-test-ids.outputs.chunks }}
     steps:
       - name: checkout
@@ -39,7 +41,7 @@ jobs:
       - id: set-test-ids
         uses: ./.github/actions/set-test-ids
         with:
-          n-chunks: 5
+          n-chunks: ${{ outputs.n-chunks }}
 
   Ubuntu-CMake:
     needs: Test-Setup
@@ -73,6 +75,7 @@ jobs:
       with:
         os: ${{ matrix.os }}
         cmake-flags: -DSOUFFLE_CODE_COVERAGE=ON
+        n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
 
     - name: cmake-test-64bit
@@ -81,6 +84,7 @@ jobs:
       with:
         os: ${{ matrix.os }}
         cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON
+        n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
 
     - name: cmake-test-64bit-noomp
@@ -89,6 +93,7 @@ jobs:
       with:
         os: ${{ matrix.os }}
         cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
+        n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
         chunk: ${{ matrix.chunk }}
 
     - name: create-coverage-report

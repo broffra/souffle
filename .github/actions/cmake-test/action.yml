@@ -10,6 +10,9 @@ inputs:
   chunk:
     chunk: 'Chunk ID'
     required: true
+  n-chunks:
+    chunk: 'Total number of chunks'
+    required: true
 runs:
   using: "composite"
   steps:
