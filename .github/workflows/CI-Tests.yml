@@ -68,27 +68,24 @@ jobs:
       uses: ./.github/actions/cmake-test
       with:
         os: ${{ matrix.os }}
-        domain: ${{ matrix.domain }}
-        chunk: ${{ matrix.chunk }}
         cmake-flags: -DSOUFFLE_CODE_COVERAGE=ON
+        chunk: ${{ matrix.chunk }}
 
     - name: cmake-test-64bit
       if: ${{ matrix.domain == '64bit' }}
       uses: ./.github/actions/cmake-test
       with:
         os: ${{ matrix.os }}
-        domain: ${{ matrix.domain }}
-        chunk: ${{ matrix.chunk }}
         cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON
+        chunk: ${{ matrix.chunk }}
 
     - name: cmake-test-64bit-noomp
       if: ${{ matrix.domain == '64bit-noomp' }}
       uses: ./.github/actions/cmake-test
       with:
         os: ${{ matrix.os }}
-        domain: ${{ matrix.domain }}
-        chunk: ${{ matrix.chunk }}
         cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
+        chunk: ${{ matrix.chunk }}
 
     - name: create-coverage-report
       if: ${{ matrix.domain == '32bit' }}

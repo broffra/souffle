@@ -4,10 +4,10 @@ inputs:
   os:
     description: 'OS'
     required: true
-  domain:
-    description: 'Domain (32bit/64bit/64bit-noomp)'
+  cmake-flags:
+    description: 'CMake flags depending on domain'
     required: true
-  domain:
+  chunk:
     chunk: 'Chunk ID'
     required: true
 runs:
