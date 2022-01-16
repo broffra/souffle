@@ -56,42 +56,39 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: checkout
-      uses: actions/checkout@v2
+      - name: checkout
+        uses: actions/checkout@v2
 
-    - name: setup-env
-      run: |
-        JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
-        echo "JOBS=${JOBS}" >> $GITHUB_ENV
-        echo "Test runner will use ${JOBS} jobs."
+      - name: install-lcov
+        if: ${{ inputs.domain == '32bit' }}
+        run: sudo apt-get update && sudo apt-get install lcov
 
-    - name: install-lcov
-      if: ${{ matrix.domain == '32bit' }}
-      run: sudo apt-get update && sudo apt-get install lcov
+      - id: cmake-test-32bit
+        if: ${{ matrix.domain == '32bit' }}
+        uses: ./.github/actions/cmake-test
+        with:
+          os: ${{ matrix.os }}
+          domain: ${{ matrix.domain }}
+          chunk: ${{ matrix.chunk }}
+          cmake-flags: -DSOUFFLE_CODE_COVERAGE=ON
 
-    - name: install-deps
-      run: sudo sh/setup/install_ubuntu_deps.sh
+      - id: cmake-test-64bit
+        if: ${{ matrix.domain == '64bit' }}
+        uses: ./.github/actions/cmake-test
+        with:
+          os: ${{ matrix.os }}
+          domain: ${{ matrix.domain }}
+          chunk: ${{ matrix.chunk }}
+          cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON
 
-    - name: setup-32bit-domain
-      if: ${{ matrix.domain == '32bit' }}
-      run: cmake -S . -B build -DSOUFFLE_CODE_COVERAGE=ON
-
-    - name: setup-64bit-domain
-      if: ${{ matrix.domain == '64bit' }}
-      run: cmake -S . -B build -DSOUFFLE_DOMAIN_64BIT=ON
-
-    - name: setup-64bit-domain-noomp
-      if: ${{ matrix.domain == '64bit-noomp' }}
-      run: cmake -S . -B build -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
-
-    - name: make
-      run: cmake --build build -j${JOBS}
-
-    - name: ctest
-      run: |
-        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 5 ${{ matrix.chunk }}" | python -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
-        echo "Running tests ${CHUNKS}."
-        ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
+      - id: cmake-test-64bit-noomp
+        if: ${{ matrix.domain == '64bit-noomp' }}
+        uses: ./.github/actions/cmake-test
+        with:
+          os: ${{ matrix.os }}
+          domain: ${{ matrix.domain }}
+          chunk: ${{ matrix.chunk }}
+          cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
 
     - name: create-coverage-report
       if: ${{ matrix.domain == '32bit' }}
