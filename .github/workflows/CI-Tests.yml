@@ -23,10 +23,9 @@ jobs:
       chunks: ${{ steps.set-test-ids.outputs.chunks }}
     steps:
       - id: set-test-ids
-        run: |
-          CHUNKS=$(python -c 'import json; print(json.dumps(list(range(5))))')
-          echo "::set-output name=chunks::${CHUNKS}"
-          echo "Test chunks: ${CHUNKS}."
+        uses: actions/set-test-ids@v1
+        with:
+          n-chunks: 5
 
   OSXSetup:
     runs-on: ubuntu-latest
@@ -35,7 +34,7 @@ jobs:
     steps:
       - id: set-test-ids
         run: |
-          CHUNKS=$(python3 -c 'import json; print(json.dumps(list(range(10))))')
+          CHUNKS=$(python3 -c 'import json; print(json.dumps(list(range(5))))')
           echo "::set-output name=chunks::${CHUNKS}"
           echo "Test chunks: ${CHUNKS}."
 
@@ -141,7 +140,7 @@ jobs:
 
     - name: ctest
       run: |
-        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 10 ${{ matrix.chunk }}" | python3 -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
+        CHUNKS=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') 5 ${{ matrix.chunk }}" | python3 -c 'import json, sys; n_tests, n_chunks, chunk_id = map(int, sys.stdin.readline().split()); d, m = divmod(n_tests, n_chunks); print(f"{chunk_id * d + min(m, chunk_id) + 1},{(chunk_id+1) * d + min(m, chunk_id+1)}")')
         echo "Running tests ${CHUNKS}"
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
           
