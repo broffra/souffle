@@ -19,14 +19,6 @@ runs:
     - name: checkout
       uses: actions/checkout@v2
 
-    - name: check-artifacts
-      run: |
-        echo "Current dir:"
-        ls -la
-        echo "GitHub dir:"
-        ls -la .github/actions/cmake-ctest
-      shell: bash
-
     - name: setup-env
       run: |
         JOBS=$(nproc || sysctl -n hw.ncpu || echo 2)
@@ -44,7 +36,7 @@ runs:
 
     - name: ctest
       run: |
-        CHUNKs=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') ${{ inputs.n-chunks }} ${{ inputs.chunk }}" | ./.github/actions/cmake-ctest/action.py)
+        CHUNKs=$(echo "$(ctest --test-dir build --show-only=json-v1 | jq '.tests | length') ${{ inputs.n-chunks }} ${{ inputs.chunk }}" | sh/chunkify.py)
         echo "Running tests ${CHUNKS}."
         ctest --test-dir build -I "${CHUNKS}" --output-on-failure --progress -j${JOBS}
       shell: bash
