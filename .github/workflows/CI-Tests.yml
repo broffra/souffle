@@ -56,39 +56,39 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: checkout
-        uses: actions/checkout@v2
+    - name: checkout
+      uses: actions/checkout@v2
 
-      - name: install-lcov
-        if: ${{ inputs.domain == '32bit' }}
-        run: sudo apt-get update && sudo apt-get install lcov
+    - name: install-lcov
+      if: ${{ inputs.domain == '32bit' }}
+      run: sudo apt-get update && sudo apt-get install lcov
 
-      - id: cmake-test-32bit
-        if: ${{ matrix.domain == '32bit' }}
-        uses: ./.github/actions/cmake-test
-        with:
-          os: ${{ matrix.os }}
-          domain: ${{ matrix.domain }}
-          chunk: ${{ matrix.chunk }}
-          cmake-flags: -DSOUFFLE_CODE_COVERAGE=ON
+    - name: cmake-test-32bit
+      if: ${{ matrix.domain == '32bit' }}
+      uses: ./.github/actions/cmake-test
+      with:
+        os: ${{ matrix.os }}
+        domain: ${{ matrix.domain }}
+        chunk: ${{ matrix.chunk }}
+        cmake-flags: -DSOUFFLE_CODE_COVERAGE=ON
 
-      - id: cmake-test-64bit
-        if: ${{ matrix.domain == '64bit' }}
-        uses: ./.github/actions/cmake-test
-        with:
-          os: ${{ matrix.os }}
-          domain: ${{ matrix.domain }}
-          chunk: ${{ matrix.chunk }}
-          cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON
+    - name: cmake-test-64bit
+      if: ${{ matrix.domain == '64bit' }}
+      uses: ./.github/actions/cmake-test
+      with:
+        os: ${{ matrix.os }}
+        domain: ${{ matrix.domain }}
+        chunk: ${{ matrix.chunk }}
+        cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON
 
-      - id: cmake-test-64bit-noomp
-        if: ${{ matrix.domain == '64bit-noomp' }}
-        uses: ./.github/actions/cmake-test
-        with:
-          os: ${{ matrix.os }}
-          domain: ${{ matrix.domain }}
-          chunk: ${{ matrix.chunk }}
-          cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
+    - name: cmake-test-64bit-noomp
+      if: ${{ matrix.domain == '64bit-noomp' }}
+      uses: ./.github/actions/cmake-test
+      with:
+        os: ${{ matrix.os }}
+        domain: ${{ matrix.domain }}
+        chunk: ${{ matrix.chunk }}
+        cmake-flags: -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
 
     - name: create-coverage-report
       if: ${{ matrix.domain == '32bit' }}
