@@ -3,12 +3,12 @@ description: 'CMake and CTest reusable component'
 inputs:
   cmake-flags:
     description: 'CMake flags to add to build options'
-    required: true
+    required: false
   n-chunks:
-    chunk: 'Total number of test chunks'
+    description: 'Total number of test chunks'
     required: true
   chunk:
-    chunk: 'Chunk index to test'
+    description: 'Chunk index to test'
     required: true
 runs:
   using: "composite"
@@ -23,12 +23,8 @@ runs:
         echo "[Debug] Test runner will use ${JOBS} jobs."
       shell: bash
 
-    - name: setup-domain
-      run: cmake -S . -B build ${{ inputs.cmake-flags }}
-      shell: bash
-
     - name: make
-      run: cmake --build build -j${JOBS}
+      run: cmake --build build --config Release -j${JOBS}
       shell: bash
 
     - name: ctest
@@ -38,5 +34,5 @@ runs:
         sh/chunkify.py
         )
         echo "[Debug] Running tests in range ${TESTS_TO_RUN}."
-        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress -j${JOBS}
+        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress --build-config Release -j${JOBS}
       shell: bash
