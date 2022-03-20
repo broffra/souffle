@@ -25,11 +25,9 @@ runs:
 
     - name: setup-domain
       run: cmake -S . -B build ${{ inputs.cmake-flags }}
-      shell: bash
 
     - name: make
-      run: cmake --build build -j${JOBS}
-      shell: bash
+      run: cmake --build build --config Release -j${JOBS}
 
     - name: ctest
       run: |
@@ -38,5 +36,4 @@ runs:
         sh/chunkify.py
         )
         echo "[Debug] Running tests in range ${TESTS_TO_RUN}."
-        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress -j${JOBS}
-      shell: bash
+        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress --build-config Release -j${JOBS}
