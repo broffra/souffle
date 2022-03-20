@@ -28,7 +28,7 @@ runs:
       shell: bash
 
     - name: make
-      run: cmake --build build -j${JOBS}
+      run: cmake --build build --config Release -j${JOBS}
       shell: bash
 
     - name: ctest
@@ -38,5 +38,5 @@ runs:
         sh/chunkify.py
         )
         echo "[Debug] Running tests in range ${TESTS_TO_RUN}."
-        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress -j${JOBS}
+        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress --build-config Release -j${JOBS}
       shell: bash
