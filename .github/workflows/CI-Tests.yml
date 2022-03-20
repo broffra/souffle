@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        n-chunks: [5]
+        n-chunks: [4]
     outputs:
       n-chunks: ${{ matrix.n-chunks }}
       chunks: ${{ steps.set-test-ids.outputs.chunks }}
@@ -121,6 +121,7 @@ jobs:
 
     - name: cmake-test-32bit
       uses: ./.github/actions/cmake-test
+      shell: bash
       with:
         cmake-flags: ''
         n-chunks: ${{ needs.Test-Setup.outputs.n-chunks }}
