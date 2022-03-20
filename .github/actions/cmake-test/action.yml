@@ -5,11 +5,15 @@ inputs:
     description: 'CMake flags to add to build options'
     required: true
   n-chunks:
-    chunk: 'Total number of test chunks'
+    description: 'Total number of test chunks'
     required: true
   chunk:
-    chunk: 'Chunk index to test'
+    description: 'Chunk index to test'
     required: true
+  shell:
+    description: 'Shell to use'
+    default: bash
+    required: false
 runs:
   using: "composite"
   steps:
@@ -25,11 +29,11 @@ runs:
 
     - name: setup-domain
       run: cmake -S . -B build ${{ inputs.cmake-flags }}
-      shell: bash
+      shell: ${{ github.event.inputs.shell }}
 
     - name: make
-      run: cmake --build build -j${JOBS}
-      shell: bash
+      run: cmake --build build --config Release -j${JOBS}
+      shell: ${{ github.event.inputs.shell }}
 
     - name: ctest
       run: |
@@ -38,5 +42,5 @@ runs:
         sh/chunkify.py
         )
         echo "[Debug] Running tests in range ${TESTS_TO_RUN}."
-        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress -j${JOBS}
-      shell: bash
+        ctest --test-dir build -I "${TESTS_TO_RUN}" --output-on-failure --progress --build-config Release -j${JOBS}
+      shell: ${{ github.event.inputs.shell }}
